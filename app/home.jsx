@@ -141,7 +141,7 @@ export default function Home() {
               placeholder="0.00"
               error={errors.price}
               keyboardType="decimal-pad"
-              prefix="$"
+              prefix="R"
             />
 
             <Pressable
