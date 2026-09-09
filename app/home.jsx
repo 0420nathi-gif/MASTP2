@@ -77,10 +77,10 @@ export default function Home() {
         >
           <View style={styles.header}>
             <View>
-              <Text style={styles.eyebrow}>CHEF'S MENU MANAGER</Text>
-              <Text style={styles.title}>Shape tonight's menu.</Text>
+              <Text style={styles.eyebrow}>FOODIE'S MENU MANAGER</Text>
+              <Text style={styles.title}>By Christoffel.</Text>
               <Text style={styles.subtitle}>
-                Keep every dish, detail, and price ready for service.
+                For every dish, detail, and price ready for service.
               </Text>
             </View>
             <View style={styles.countBadge}>
