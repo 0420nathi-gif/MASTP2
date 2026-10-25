@@ -150,6 +150,7 @@ export default function Home() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <ThemeToggle />
           <View style={styles.header}>
             <View>
               <Text style={styles.eyebrow}>FOODIE'S MENU MANAGER</Text>
@@ -187,7 +188,6 @@ export default function Home() {
               </HoverablePressable>
             </Link>
           </View>
-          <ThemeToggle />
           <HelpTip title="Getting started">
             Add a dish name, description, course, and price, then tap Add dish.
             Your menu is saved automatically.

@@ -55,8 +55,8 @@ export default function Stats() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.eyebrow}>MENU OVERVIEW</Text>
         <ThemeToggle />
+        <Text style={styles.eyebrow}>MENU OVERVIEW</Text>
         <Text style={styles.title}>Menu statistics</Text>
         <Text style={styles.subtitle}>
           A quick look at your dishes, pricing, and availability.

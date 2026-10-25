@@ -81,8 +81,8 @@ export default function About() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.eyebrow}>CURRENT MENU</Text>
         <ThemeToggle />
+        <Text style={styles.eyebrow}>CURRENT MENU</Text>
         <View style={styles.titleRow}>
           <View>
             <Text style={styles.title}>Your dishes</Text>

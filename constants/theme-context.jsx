@@ -44,10 +44,11 @@ export function ThemeToggle() {
         isDark ? "Switch to light mode" : "Switch to dark mode"
       }
       style={{
-        alignSelf: "flex-start",
+        alignSelf: "flex-end",
         borderColor: ink,
         borderRadius: 20,
         borderWidth: 1,
+        marginBottom: 16,
         paddingHorizontal: 13,
         paddingVertical: 8,
       }}

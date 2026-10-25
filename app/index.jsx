@@ -1,21 +1,33 @@
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { useRouter } from "expo-router";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { fontFamilies, useAppTheme } from "../constants/theme-context";
 import { useMenu } from "../constants/menu-context";
 
+const SPLASH_MINIMUM_DURATION_MS = 1200;
+
 export default function SplashScreen() {
   const router = useRouter();
   const { isLoading } = useMenu();
+  const [minimumTimeElapsed, setMinimumTimeElapsed] = useState(false);
   const theme = useAppTheme();
   const styles = createStyles(theme);
 
   useEffect(() => {
-    if (!isLoading) router.replace("/home");
-  }, [isLoading, router]);
+    const timeout = setTimeout(
+      () => setMinimumTimeElapsed(true),
+      SPLASH_MINIMUM_DURATION_MS,
+    );
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoading && minimumTimeElapsed) router.replace("/home");
+  }, [isLoading, minimumTimeElapsed, router]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

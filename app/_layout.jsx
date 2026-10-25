@@ -53,6 +53,10 @@ export default function RootLayout() {
             options={{ title: "Contact", headerShown: false }}
           />
           <Stack.Screen
+            name="Menu"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
             name="Stats"
             options={{ title: "Menu statistics", headerShown: false }}
           />

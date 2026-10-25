@@ -69,14 +69,13 @@ export default function Contact() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          <ThemeToggle />
           <Text style={styles.eyebrow}>KITCHEN SUPPORT</Text>
           <Text style={styles.title}>Let's keep service moving.</Text>
           <Text style={styles.subtitle}>
             Reach the team for menu questions, account help, or a little kitchen
             wisdom.
           </Text>
-          <ThemeToggle />
-
           <View style={styles.contactCard}>
             <Text style={styles.cardLabel}>EMAIL</Text>
             <HoverablePressable
