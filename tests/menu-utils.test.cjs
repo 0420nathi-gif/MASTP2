@@ -36,6 +36,32 @@ test("filters dishes by name, description, and course without case sensitivity",
   assert.deepEqual(filterMenuItems(menuItems, "soup"), []);
 });
 
+test("combines course and availability filters with search", () => {
+  const items = [
+    menuItems[0],
+    { ...menuItems[1], available: false },
+    {
+      id: "3",
+      name: "Lemon Sorbet",
+      description: "Fresh citrus",
+      course: "Dessert",
+      price: "6.00",
+    },
+  ];
+
+  assert.deepEqual(
+    filterMenuItems(items, "lemon", "Dessert", "Available"),
+    [items[2]],
+  );
+  assert.deepEqual(
+    filterMenuItems(items, "", "Dessert", "Unavailable"),
+    [items[1]],
+  );
+  assert.deepEqual(filterMenuItems(items, "", "Main", "Available"), [
+    items[0],
+  ]);
+});
+
 test("validates saved menu item records", () => {
   assert.equal(isMenuItem(menuItems[0]), true);
   assert.equal(isMenuItem({ ...menuItems[0], price: 18 }), false);

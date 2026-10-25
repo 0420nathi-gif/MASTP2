@@ -13,11 +13,15 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import HelpTip from "../components/HelpTip";
+import AppNavigation from "../components/AppNavigation";
 import {
   HoverablePressable,
   HoverableView,
 } from "../components/InteractiveControls";
-import { getCategoryIcon } from "../constants/food-categories";
+import {
+  foodCategories,
+  getCategoryIcon,
+} from "../constants/food-categories";
 import { useMenu } from "../constants/menu-context";
 import {
   fontFamilies,
@@ -33,15 +37,27 @@ export default function About() {
     toggleItemAvailability,
     isLoading,
     storageError,
+    saveStatus,
   } = useMenu();
   const canModifyMenu = !isLoading && !storageError;
   const [search, setSearch] = useState("");
+  const [courseFilter, setCourseFilter] = useState("All");
+  const [availabilityFilter, setAvailabilityFilter] = useState("All");
   const theme = useAppTheme();
   const styles = createStyles(theme);
+  const courseFilters = [
+    "All",
+    ...foodCategories.map((category) => category.name),
+  ];
+  const availabilityFilters = ["All", "Available", "Unavailable"];
   const filteredItems = useMemo(
-    () => filterMenuItems(menuItems, search),
-    [menuItems, search],
+    () => filterMenuItems(menuItems, search, courseFilter, availabilityFilter),
+    [menuItems, search, courseFilter, availabilityFilter],
   );
+  const hasActiveFilters =
+    Boolean(search.trim()) ||
+    courseFilter !== "All" ||
+    availabilityFilter !== "All";
 
   const confirmRemove = (item) => {
     const remove = () => removeItem(item.id);
@@ -83,11 +99,25 @@ export default function About() {
         {storageError ? (
           <Text style={styles.storageError}>{storageError}</Text>
         ) : null}
+        <Text
+          accessibilityLiveRegion="polite"
+          style={[
+            styles.saveStatus,
+            saveStatus === "error" && styles.saveStatusError,
+          ]}
+        >
+          {isLoading
+            ? "Loading saved menu…"
+            : saveStatus === "saving"
+              ? "Saving your menu…"
+              : saveStatus === "error"
+                ? "Menu changes could not be saved"
+                : "Menu saved"}
+        </Text>
 
         <HelpTip title="Manage your dishes">
-          Search by dish name, description, or course. Edit to update a dish,
-          mark it unavailable when it is out of stock, or delete it from your
-          saved menu.
+          Search by dish name or description, then filter by course and
+          availability. Edit, update stock status, or delete a dish here.
         </HelpTip>
 
         <HoverableView
@@ -108,13 +138,74 @@ export default function About() {
             <HoverablePressable
               accessibilityRole="button"
               accessibilityLabel="Clear search"
-              hitSlop={8}
               onPress={() => setSearch("")}
+              style={styles.clearSearchButton}
             >
               <FontAwesome6 name="xmark" size={15} color={theme.muted} />
             </HoverablePressable>
           ) : null}
         </HoverableView>
+
+        <Text style={styles.filterLabel}>COURSE</Text>
+        <View
+          style={styles.filterRow}
+          accessibilityLabel="Filter menu by course"
+        >
+          {courseFilters.map((course) => (
+            <HoverablePressable
+              key={course}
+              accessibilityRole="button"
+              accessibilityLabel={`${course} course filter`}
+              accessibilityState={{ selected: courseFilter === course }}
+              onPress={() => setCourseFilter(course)}
+              style={[
+                styles.filterChip,
+                courseFilter === course && styles.filterChipSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  courseFilter === course && styles.filterTextSelected,
+                ]}
+              >
+                {course}
+              </Text>
+            </HoverablePressable>
+          ))}
+        </View>
+        <Text style={styles.filterLabel}>AVAILABILITY</Text>
+        <View
+          style={[styles.filterRow, styles.availabilityFilters]}
+          accessibilityLabel="Filter menu by availability"
+        >
+          {availabilityFilters.map((availability) => (
+            <HoverablePressable
+              key={availability}
+              accessibilityRole="button"
+              accessibilityLabel={`${availability} dishes filter`}
+              accessibilityState={{
+                selected: availabilityFilter === availability,
+              }}
+              onPress={() => setAvailabilityFilter(availability)}
+              style={[
+                styles.filterChip,
+                availabilityFilter === availability &&
+                  styles.filterChipSelected,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  availabilityFilter === availability &&
+                    styles.filterTextSelected,
+                ]}
+              >
+                {availability}
+              </Text>
+            </HoverablePressable>
+          ))}
+        </View>
 
         {isLoading ? (
           <Text style={styles.emptyText}>Loading your saved menu...</Text>
@@ -127,13 +218,29 @@ export default function About() {
               style={styles.emptyIcon}
             />
             <Text style={styles.emptyTitle}>
-              {search ? "No dishes found." : "Your menu is waiting."}
+              {hasActiveFilters
+                ? "No dishes match these filters."
+                : "Your menu is waiting."}
             </Text>
             <Text style={styles.emptyText}>
-              {search
-                ? "Try another dish name, description, or course."
+              {hasActiveFilters
+                ? "Adjust your search or filters to see more dishes."
                 : "Add a dish from the menu builder to see it here."}
             </Text>
+            {hasActiveFilters ? (
+              <HoverablePressable
+                accessibilityRole="button"
+                accessibilityLabel="Clear menu search and filters"
+                onPress={() => {
+                  setSearch("");
+                  setCourseFilter("All");
+                  setAvailabilityFilter("All");
+                }}
+                style={styles.clearFiltersButton}
+              >
+                <Text style={styles.clearFiltersText}>Clear filters</Text>
+              </HoverablePressable>
+            ) : null}
           </View>
         ) : (
           filteredItems.map((item) => (
@@ -160,9 +267,13 @@ export default function About() {
                 ]}
               >
                 <FontAwesome6
-                  name={item.available === false ? "circle-xmark" : "circle-check"}
+                  name={
+                    item.available === false ? "circle-xmark" : "circle-check"
+                  }
                   size={12}
-                  color={item.available === false ? theme.error : theme.success}
+                  color={
+                    item.available === false ? theme.error : theme.success
+                  }
                 />
                 <Text
                   style={[
@@ -180,8 +291,9 @@ export default function About() {
                 >
                   <HoverablePressable
                     accessibilityRole="button"
+                    accessibilityLabel={`Edit ${item.name}`}
                     disabled={!canModifyMenu}
-                    style={styles.editButton}
+                    style={styles.actionButton}
                   >
                     <FontAwesome6
                       name="pen"
@@ -192,12 +304,16 @@ export default function About() {
                   </HoverablePressable>
                 </Link>
                 <HoverablePressable
-                  accessibilityRole="button"
+                  accessibilityRole="switch"
                   accessibilityLabel={
                     item.available === false
                       ? `Mark ${item.name} available`
                       : `Mark ${item.name} unavailable`
                   }
+                  accessibilityState={{
+                    checked: item.available !== false,
+                    disabled: !canModifyMenu,
+                  }}
                   disabled={!canModifyMenu}
                   onPress={() => toggleItemAvailability(item.id)}
                   style={styles.availabilityButton}
@@ -238,17 +354,8 @@ export default function About() {
             <Text style={styles.addButtonText}>+ Add another dish</Text>
           </HoverablePressable>
         </Link>
-        <Link href="/Contact" asChild>
-          <HoverablePressable style={styles.contactLink}>
-            <Text style={styles.contactLinkText}>Contact kitchen support</Text>
-          </HoverablePressable>
-        </Link>
-        <Link href="/Stats" asChild>
-          <HoverablePressable style={styles.contactLink}>
-            <Text style={styles.contactLinkText}>View menu statistics</Text>
-          </HoverablePressable>
-        </Link>
       </ScrollView>
+      <AppNavigation />
     </SafeAreaView>
   );
 }
@@ -310,6 +417,13 @@ const createStyles = (theme) =>
       marginBottom: 12,
       padding: 12,
     },
+    saveStatus: {
+      color: theme.muted,
+      fontFamily: fontFamilies.regular,
+      fontSize: 12,
+      marginBottom: 12,
+    },
+    saveStatusError: { color: theme.error },
     searchField: {
       alignItems: "center",
       backgroundColor: theme.inputBackground,
@@ -333,6 +447,49 @@ const createStyles = (theme) =>
       fontSize: 14,
       paddingVertical: 10,
     },
+    clearSearchButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 44,
+      minWidth: 44,
+    },
+    filterLabel: {
+      color: theme.muted,
+      fontFamily: fontFamilies.bold,
+      fontSize: 10,
+      letterSpacing: 1,
+      marginBottom: 7,
+    },
+    filterRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 7,
+      marginBottom: 14,
+    },
+    availabilityFilters: { marginBottom: 18 },
+    filterChip: {
+      alignItems: "center",
+      backgroundColor: theme.inputBackground,
+      borderColor: theme.chipBorder,
+      borderRadius: 20,
+      borderWidth: 1,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: 13,
+    },
+    filterChipSelected: {
+      backgroundColor: theme.primary,
+      borderColor: theme.primary,
+    },
+    filterText: {
+      color: theme.ink,
+      fontFamily: fontFamilies.medium,
+      fontSize: 12,
+    },
+    filterTextSelected: {
+      color: theme.surface,
+      fontFamily: fontFamilies.bold,
+    },
     emptyState: {
       alignItems: "center",
       borderColor: theme.chipBorder,
@@ -355,6 +512,18 @@ const createStyles = (theme) =>
       lineHeight: 19,
       marginTop: 6,
       textAlign: "center",
+    },
+    clearFiltersButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      marginTop: 12,
+      minHeight: 44,
+      paddingHorizontal: 14,
+    },
+    clearFiltersText: {
+      color: theme.primary,
+      fontFamily: fontFamilies.bold,
+      fontSize: 13,
     },
     menuItem: {
       backgroundColor: theme.surface,
@@ -426,19 +595,40 @@ const createStyles = (theme) =>
       marginTop: 15,
       paddingTop: 12,
     },
-    editButton: { alignItems: "center", flexDirection: "row", gap: 5 },
+    actionButton: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 5,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: 5,
+    },
     editButtonText: {
       color: theme.ink,
       fontFamily: fontFamilies.medium,
       fontSize: 13,
     },
-    availabilityButton: { alignItems: "center", flexDirection: "row", gap: 5 },
+    availabilityButton: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 5,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: 5,
+    },
     availabilityButtonText: {
       color: theme.primary,
       fontFamily: fontFamilies.medium,
       fontSize: 12,
     },
-    deleteButton: { alignItems: "center", flexDirection: "row", gap: 5 },
+    deleteButton: {
+      alignItems: "center",
+      flexDirection: "row",
+      gap: 5,
+      justifyContent: "center",
+      minHeight: 44,
+      paddingHorizontal: 5,
+    },
     deleteButtonText: {
       color: theme.error,
       fontFamily: fontFamilies.medium,
@@ -455,11 +645,5 @@ const createStyles = (theme) =>
       color: theme.surface,
       fontFamily: fontFamilies.bold,
       fontSize: 15,
-    },
-    contactLink: { alignItems: "center", paddingVertical: 14 },
-    contactLinkText: {
-      color: theme.primary,
-      fontFamily: fontFamilies.bold,
-      fontSize: 14,
     },
   });

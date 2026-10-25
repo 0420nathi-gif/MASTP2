@@ -5,7 +5,6 @@ import {
 } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
-  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -18,6 +17,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import HelpTip from "../components/HelpTip";
+import AppNavigation from "../components/AppNavigation";
 import {
   HoverablePressable,
   HoverableView,
@@ -36,10 +36,18 @@ export default function Home() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [confirmation, setConfirmation] = useState("");
-  const { addItem, updateItem, menuItems, isLoading, storageError } = useMenu();
+  const {
+    addItem,
+    updateItem,
+    menuItems,
+    isLoading,
+    storageError,
+    saveStatus,
+  } = useMenu();
   const { editId } = useLocalSearchParams();
   const router = useRouter();
   const initializedEditId = useRef(null);
+  const inputRefs = useRef({});
   const editingItem =
     typeof editId === "string"
       ? menuItems.find((item) => item.id === editId)
@@ -95,6 +103,10 @@ export default function Home() {
     else if (!Number.isFinite(price) || price <= 0)
       nextErrors.price = "Use a price greater than 0.";
     setErrors(nextErrors);
+    const firstInvalidField = ["name", "description", "price"].find(
+      (field) => nextErrors[field],
+    );
+    if (firstInvalidField) inputRefs.current[firstInvalidField]?.focus();
     return Object.keys(nextErrors).length === 0;
   };
 
@@ -118,21 +130,23 @@ export default function Home() {
     setForm(emptyForm);
     setErrors({});
     setConfirmation(`${savedItem.name} was added to your menu.`);
-    Alert.alert("Menu updated", `${savedItem.name} is now on the menu.`);
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={["top"]}>
+    <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
       <StatusBar style={theme.isDark ? "light" : "dark"} />
       {storageError ? (
         <Text style={styles.storageError}>{storageError}</Text>
       ) : null}
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
           contentContainerStyle={styles.content}
+          keyboardDismissMode={
+            Platform.OS === "ios" ? "interactive" : "on-drag"
+          }
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -148,6 +162,30 @@ export default function Home() {
               <Text style={styles.countNumber}>{menuItems.length}</Text>
               <Text style={styles.countLabel}>DISHES</Text>
             </View>
+          </View>
+          <View style={styles.quickNavigation}>
+            <Link href="/Menu" asChild>
+              <HoverablePressable
+                accessibilityRole="link"
+                style={styles.quickNavigationButton}
+              >
+                <FontAwesome6 name="utensils" size={14} color={theme.primary} />
+                <Text style={styles.quickNavigationText}>Menu</Text>
+              </HoverablePressable>
+            </Link>
+            <Link href="/Stats" asChild>
+              <HoverablePressable
+                accessibilityRole="link"
+                style={styles.quickNavigationButton}
+              >
+                <FontAwesome6
+                  name="chart-simple"
+                  size={14}
+                  color={theme.primary}
+                />
+                <Text style={styles.quickNavigationText}>Statistics</Text>
+              </HoverablePressable>
+            </Link>
           </View>
           <ThemeToggle />
           <HelpTip title="Getting started">
@@ -168,6 +206,11 @@ export default function Home() {
               onChangeText={(value) => updateField("name", value)}
               placeholder="e.g. Charred lemon chicken"
               error={errors.name}
+              inputRef={(ref) => {
+                inputRefs.current.name = ref;
+              }}
+              returnKeyType="next"
+              onSubmitEditing={() => inputRefs.current.description?.focus()}
             />
             <Field
               label="Description"
@@ -176,6 +219,9 @@ export default function Home() {
               placeholder="What makes this dish special?"
               error={errors.description}
               multiline
+              inputRef={(ref) => {
+                inputRefs.current.description = ref;
+              }}
             />
 
             <Text style={styles.label}>Course</Text>
@@ -183,6 +229,11 @@ export default function Home() {
               {foodCategories.map((category) => (
                 <HoverablePressable
                   key={category.name}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${category.name} course`}
+                  accessibilityState={{
+                    selected: form.course === category.name,
+                  }}
                   onPress={() => updateField("course", category.name)}
                   style={[
                     styles.courseChip,
@@ -193,7 +244,9 @@ export default function Home() {
                     name={category.icon}
                     size={13}
                     color={
-                      form.course === category.name ? theme.surface : theme.primary
+                      form.course === category.name
+                        ? theme.surface
+                        : theme.primary
                     }
                   />
                   <Text
@@ -208,7 +261,9 @@ export default function Home() {
               ))}
             </View>
             {errors.course ? (
-              <Text style={styles.error}>{errors.course}</Text>
+              <Text accessibilityLiveRegion="polite" style={styles.error}>
+                {errors.course}
+              </Text>
             ) : null}
             <Field
               label="Price"
@@ -218,6 +273,11 @@ export default function Home() {
               error={errors.price}
               keyboardType="decimal-pad"
               prefix="R"
+              inputRef={(ref) => {
+                inputRefs.current.price = ref;
+              }}
+              returnKeyType="done"
+              onSubmitEditing={saveMenuItem}
             />
 
             <HoverablePressable
@@ -239,30 +299,45 @@ export default function Home() {
             {confirmation ? (
               <View style={styles.confirmation}>
                 <Text style={styles.confirmationMark}>✓</Text>
-                <Text style={styles.confirmationText}>{confirmation}</Text>
+                <Text
+                  accessibilityLiveRegion="polite"
+                  style={styles.confirmationText}
+                >
+                  {confirmation}
+                </Text>
               </View>
             ) : null}
+            <Text
+              accessibilityLiveRegion="polite"
+              style={[
+                styles.saveStatus,
+                saveStatus === "error" && styles.saveStatusError,
+              ]}
+            >
+              {isLoading
+                ? "Loading saved menu…"
+                : saveStatus === "saving"
+                  ? "Saving your menu…"
+                  : saveStatus === "error"
+                    ? "Menu changes could not be saved"
+                    : "Menu saved"}
+            </Text>
+            {confirmation ? (
+              <Link href="/Menu" asChild>
+                <HoverablePressable
+                  accessibilityRole="link"
+                  style={styles.confirmationAction}
+                >
+                  <Text style={styles.confirmationActionText}>
+                    View your menu
+                  </Text>
+                </HoverablePressable>
+              </Link>
+            ) : null}
           </View>
-
-          <Link href="/Menu" asChild>
-            <HoverablePressable style={styles.viewMenuButton}>
-              <Text style={styles.viewMenuText}>View current menu →</Text>
-            </HoverablePressable>
-          </Link>
-          <Link href="/Stats" asChild>
-            <HoverablePressable style={styles.statsLink}>
-              <Text style={styles.statsLinkText}>View menu statistics</Text>
-            </HoverablePressable>
-          </Link>
-          <Link href="/Contact" asChild>
-            <HoverablePressable style={styles.contactLink}>
-              <Text style={styles.contactLinkText}>
-                Contact kitchen support
-              </Text>
-            </HoverablePressable>
-          </Link>
         </ScrollView>
       </KeyboardAvoidingView>
+      <AppNavigation />
     </SafeAreaView>
   );
 }
@@ -276,6 +351,9 @@ function Field({
   multiline,
   keyboardType,
   prefix,
+  inputRef,
+  returnKeyType,
+  onSubmitEditing,
 }) {
   const theme = useAppTheme();
   const styles = createStyles(theme);
@@ -289,6 +367,9 @@ function Field({
       >
         {prefix ? <Text style={styles.prefix}>{prefix}</Text> : null}
         <TextInput
+          ref={inputRef}
+          accessibilityLabel={label}
+          accessibilityHint={error || undefined}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -296,10 +377,16 @@ function Field({
           style={[styles.input, multiline && styles.textArea]}
           multiline={multiline}
           keyboardType={keyboardType}
+          returnKeyType={returnKeyType}
+          onSubmitEditing={onSubmitEditing}
           textAlignVertical={multiline ? "top" : "center"}
         />
       </HoverableView>
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        <Text accessibilityLiveRegion="polite" style={styles.error}>
+          {error}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -345,6 +432,28 @@ const createStyles = (theme) =>
       justifyContent: "center",
       alignItems: "center",
       marginTop: 5,
+    },
+    quickNavigation: {
+      flexDirection: "row",
+      gap: 10,
+      marginBottom: 18,
+      marginTop: -12,
+    },
+    quickNavigationButton: {
+      alignItems: "center",
+      backgroundColor: theme.surface,
+      borderColor: theme.chipBorder,
+      borderRadius: 10,
+      borderWidth: 1,
+      flexDirection: "row",
+      gap: 8,
+      minHeight: 44,
+      paddingHorizontal: 14,
+    },
+    quickNavigationText: {
+      color: theme.ink,
+      fontFamily: fontFamilies.medium,
+      fontSize: 13,
     },
     countNumber: {
       color: theme.accent,
@@ -436,6 +545,7 @@ const createStyles = (theme) =>
       borderRadius: 20,
       paddingVertical: 9,
       paddingHorizontal: 14,
+      minHeight: 44,
       backgroundColor: theme.inputBackground,
       flexDirection: "row",
       gap: 7,
@@ -480,27 +590,21 @@ const createStyles = (theme) =>
       fontFamily: fontFamilies.medium,
       fontSize: 13,
     },
-    viewMenuButton: {
+    saveStatus: {
+      color: theme.muted,
+      fontFamily: fontFamilies.regular,
+      fontSize: 12,
+      marginTop: 12,
+      textAlign: "center",
+    },
+    saveStatusError: { color: theme.error },
+    confirmationAction: {
       alignItems: "center",
-      borderColor: theme.ink,
-      borderRadius: 11,
-      borderWidth: 1,
-      marginTop: 24,
-      paddingVertical: 14,
+      minHeight: 44,
+      justifyContent: "center",
+      marginTop: 4,
     },
-    viewMenuText: {
-      color: theme.ink,
-      fontFamily: fontFamilies.bold,
-      fontSize: 14,
-    },
-    statsLink: { alignItems: "center", paddingVertical: 12 },
-    statsLinkText: {
-      color: theme.primary,
-      fontFamily: fontFamilies.bold,
-      fontSize: 14,
-    },
-    contactLink: { alignItems: "center", paddingVertical: 14 },
-    contactLinkText: {
+    confirmationActionText: {
       color: theme.primary,
       fontFamily: fontFamilies.bold,
       fontSize: 14,

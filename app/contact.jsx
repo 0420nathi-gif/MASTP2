@@ -1,8 +1,9 @@
-import { Link } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  KeyboardAvoidingView,
   Linking,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -15,6 +16,7 @@ import {
   HoverablePressable,
   HoverableView,
 } from "../components/InteractiveControls";
+import AppNavigation from "../components/AppNavigation";
 import { fontFamilies, ThemeToggle, useAppTheme } from "../constants/theme-context";
 
 export default function Contact() {
@@ -57,70 +59,70 @@ export default function Contact() {
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
       <StatusBar style={theme.isDark ? "light" : "dark"} />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+      <KeyboardAvoidingView
+        style={styles.keyboardView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
-        <Text style={styles.eyebrow}>KITCHEN SUPPORT</Text>
-        <Text style={styles.title}>Let's keep service moving.</Text>
-        <Text style={styles.subtitle}>
-          Reach the team for menu questions, account help, or a little kitchen
-          wisdom.
-        </Text>
-        <ThemeToggle />
-
-        <View style={styles.contactCard}>
-          <Text style={styles.cardLabel}>EMAIL</Text>
-          <HoverablePressable
-            accessibilityRole="link"
-            onPress={() => openEmailDraft()}
-          >
-            <Text style={styles.cardValue}>0420nathi@gmail.com</Text>
-          </HoverablePressable>
-          <Text style={styles.cardHint}>Tap to open your email app.</Text>
-        </View>
-
-        <View style={styles.messageCard}>
-          <Text style={styles.cardLabel}>SEND A MESSAGE</Text>
-          <Text style={styles.messageTitle}>What can we help with?</Text>
-          <HoverableView
-            style={styles.messageInputShell}
-            hoverStyle={styles.messageInputHovered}
-          >
-            <TextInput
-              value={message}
-              onChangeText={setMessage}
-              multiline
-              textAlignVertical="top"
-              placeholder="Tell us what's on your mind..."
-              placeholderTextColor={theme.placeholder}
-              style={styles.messageInput}
-            />
-          </HoverableView>
-          <HoverablePressable
-            accessibilityRole="button"
-            onPress={sendMessage}
-            style={styles.sendButton}
-          >
-            <Text style={styles.sendButtonText}>Open email draft</Text>
-          </HoverablePressable>
-          <Text style={styles.cardHint}>
-            Your email app will open with this message ready to review and send.
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Text style={styles.eyebrow}>KITCHEN SUPPORT</Text>
+          <Text style={styles.title}>Let's keep service moving.</Text>
+          <Text style={styles.subtitle}>
+            Reach the team for menu questions, account help, or a little kitchen
+            wisdom.
           </Text>
-        </View>
+          <ThemeToggle />
 
-        <Link href="/Home" asChild>
-          <HoverablePressable style={styles.backButton}>
-            <Text style={styles.backButtonText}>Back to menu builder</Text>
-          </HoverablePressable>
-        </Link>
-        <Link href="/Menu" asChild>
-          <HoverablePressable style={styles.backButton}>
-            <Text style={styles.backButtonText}>View current menu</Text>
-          </HoverablePressable>
-        </Link>
-      </ScrollView>
+          <View style={styles.contactCard}>
+            <Text style={styles.cardLabel}>EMAIL</Text>
+            <HoverablePressable
+              accessibilityRole="link"
+              accessibilityLabel="Email kitchen support"
+              onPress={() => openEmailDraft()}
+              style={styles.emailButton}
+            >
+              <Text style={styles.cardValue}>0420nathi@gmail.com</Text>
+            </HoverablePressable>
+            <Text style={styles.cardHint}>Tap to open your email app.</Text>
+          </View>
+
+          <View style={styles.messageCard}>
+            <Text style={styles.cardLabel}>SEND A MESSAGE</Text>
+            <Text style={styles.messageTitle}>What can we help with?</Text>
+            <HoverableView
+              style={styles.messageInputShell}
+              hoverStyle={styles.messageInputHovered}
+            >
+              <TextInput
+                accessibilityLabel="Message for kitchen support"
+                value={message}
+                onChangeText={setMessage}
+                multiline
+                textAlignVertical="top"
+                placeholder="Tell us what's on your mind..."
+                placeholderTextColor={theme.placeholder}
+                style={styles.messageInput}
+              />
+            </HoverableView>
+            <HoverablePressable
+              accessibilityRole="button"
+              onPress={sendMessage}
+              style={styles.sendButton}
+            >
+              <Text style={styles.sendButtonText}>Open email draft</Text>
+            </HoverablePressable>
+            <Text style={styles.cardHint}>
+              Your email app will open with this message ready to review and
+              send.
+            </Text>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <AppNavigation />
     </SafeAreaView>
   );
 }
@@ -128,6 +130,7 @@ export default function Contact() {
 const createStyles = (theme) =>
   StyleSheet.create({
     safeArea: { flex: 1, backgroundColor: theme.background },
+    keyboardView: { flex: 1 },
     content: { padding: 24, paddingBottom: 44 },
     eyebrow: {
       color: theme.primary,
@@ -169,6 +172,7 @@ const createStyles = (theme) =>
       fontFamily: fontFamilies.bold,
       fontSize: 17,
     },
+    emailButton: { justifyContent: "center", minHeight: 44 },
     cardHint: {
       color: theme.muted,
       fontFamily: fontFamilies.regular,
@@ -217,18 +221,5 @@ const createStyles = (theme) =>
       color: theme.surface,
       fontFamily: fontFamilies.bold,
       fontSize: 15,
-    },
-    backButton: {
-      alignItems: "center",
-      borderColor: theme.ink,
-      borderRadius: 11,
-      borderWidth: 1,
-      marginTop: 17,
-      paddingVertical: 13,
-    },
-    backButtonText: {
-      color: theme.ink,
-      fontFamily: fontFamilies.bold,
-      fontSize: 14,
     },
   });

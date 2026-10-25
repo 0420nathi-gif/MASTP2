@@ -1,5 +1,4 @@
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
-import { Link } from "expo-router";
 import React from "react";
 import {
   ScrollView,
@@ -10,7 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import HelpTip from "../components/HelpTip";
-import { HoverablePressable } from "../components/InteractiveControls";
+import AppNavigation from "../components/AppNavigation";
 import { getMenuStatistics } from "../constants/menu-utils.cjs";
 import { useMenu } from "../constants/menu-context";
 import {
@@ -91,17 +90,8 @@ export default function Stats() {
           </View>
         ))}
 
-        <Link href="/Menu" asChild>
-          <HoverablePressable style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>Manage your menu</Text>
-          </HoverablePressable>
-        </Link>
-        <Link href="/Home" asChild>
-          <HoverablePressable style={styles.secondaryButton}>
-            <Text style={styles.secondaryButtonText}>Add a dish</Text>
-          </HoverablePressable>
-        </Link>
       </ScrollView>
+      <AppNavigation />
     </SafeAreaView>
   );
 }
@@ -174,30 +164,5 @@ const createStyles = (theme) =>
       fontFamily: fontFamilies.regular,
       fontSize: 12,
       marginTop: 3,
-    },
-    primaryButton: {
-      alignItems: "center",
-      backgroundColor: theme.ink,
-      borderRadius: 11,
-      marginTop: 12,
-      paddingVertical: 15,
-    },
-    primaryButtonText: {
-      color: theme.surface,
-      fontFamily: fontFamilies.bold,
-      fontSize: 15,
-    },
-    secondaryButton: {
-      alignItems: "center",
-      borderColor: theme.ink,
-      borderRadius: 11,
-      borderWidth: 1,
-      marginTop: 12,
-      paddingVertical: 14,
-    },
-    secondaryButtonText: {
-      color: theme.ink,
-      fontFamily: fontFamilies.bold,
-      fontSize: 14,
     },
   });

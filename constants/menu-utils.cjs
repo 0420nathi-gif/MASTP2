@@ -12,15 +12,29 @@ function isMenuItem(item) {
   );
 }
 
-function filterMenuItems(menuItems, search) {
+function filterMenuItems(
+  menuItems,
+  search,
+  courseFilter = "All",
+  availabilityFilter = "All",
+) {
   const query = search.trim().toLowerCase();
-  if (!query) return menuItems;
+  return menuItems.filter((item) => {
+    const matchesQuery =
+      !query ||
+      `${item.name} ${item.description} ${item.course}`
+        .toLowerCase()
+        .includes(query);
+    const matchesCourse =
+      courseFilter === "All" || item.course === courseFilter;
+    const isAvailable = item.available !== false;
+    const matchesAvailability =
+      availabilityFilter === "All" ||
+      (availabilityFilter === "Available" && isAvailable) ||
+      (availabilityFilter === "Unavailable" && !isAvailable);
 
-  return menuItems.filter((item) =>
-    `${item.name} ${item.description} ${item.course}`
-      .toLowerCase()
-      .includes(query),
-  );
+    return matchesQuery && matchesCourse && matchesAvailability;
+  });
 }
 
 function addMenuItem(menuItems, item) {

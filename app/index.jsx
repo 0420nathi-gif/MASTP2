@@ -5,16 +5,17 @@ import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { fontFamilies, useAppTheme } from "../constants/theme-context";
+import { useMenu } from "../constants/menu-context";
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { isLoading } = useMenu();
   const theme = useAppTheme();
   const styles = createStyles(theme);
 
   useEffect(() => {
-    const timeout = setTimeout(() => router.replace("/Home"), 1800);
-    return () => clearTimeout(timeout);
-  }, [router]);
+    if (!isLoading) router.replace("/Home");
+  }, [isLoading, router]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

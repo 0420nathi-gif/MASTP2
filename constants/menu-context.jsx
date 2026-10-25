@@ -1,5 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   addMenuItem as addMenuItemToList,
   isMenuItem,
@@ -15,7 +21,18 @@ export function MenuProvider({ children }) {
   const [menuItems, setMenuItems] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [storageError, setStorageError] = useState("");
+  const [saveStatus, setSaveStatus] = useState("loading");
   const [hasLoaded, setHasLoaded] = useState(false);
+  const saveQueue = useRef(Promise.resolve());
+  const saveSequence = useRef(0);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -33,6 +50,7 @@ export function MenuProvider({ children }) {
       } catch (error) {
         console.error("Failed to load the saved menu.", error);
         if (isMounted) {
+          setSaveStatus("error");
           setStorageError(
             "Your saved menu couldn't be loaded. Try restarting the app or contact support if the problem continues.",
           );
@@ -55,14 +73,27 @@ export function MenuProvider({ children }) {
     if (!hasLoaded || storageError) return;
 
     const saveMenu = async () => {
-      try {
-        await AsyncStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(menuItems));
-      } catch (error) {
-        console.error("Failed to save the menu.", error);
-        setStorageError(
-          "Your latest menu changes couldn't be saved. Check your device storage.",
-        );
-      }
+      const sequence = ++saveSequence.current;
+      const serializedMenu = JSON.stringify(menuItems);
+      setSaveStatus("saving");
+      saveQueue.current = saveQueue.current.then(
+        () => AsyncStorage.setItem(MENU_STORAGE_KEY, serializedMenu),
+      ).then(
+        () => {
+          if (isMounted.current && sequence === saveSequence.current) {
+            setSaveStatus("saved");
+          }
+        },
+        (error) => {
+          console.error("Failed to save the menu.", error);
+          if (isMounted.current && sequence === saveSequence.current) {
+            setSaveStatus("error");
+            setStorageError(
+              "Your latest menu changes couldn't be saved. Check your device storage.",
+            );
+          }
+        },
+      );
     };
 
     saveMenu();
@@ -94,6 +125,7 @@ export function MenuProvider({ children }) {
         toggleItemAvailability,
         isLoading,
         storageError,
+        saveStatus,
       }}
     >
       {children}
