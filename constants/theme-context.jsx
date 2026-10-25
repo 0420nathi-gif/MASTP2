@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState } from "react";
 import { Pressable, Text } from "react-native";
 
+export const fontFamilies = {
+  regular: "Inter_400Regular",
+  medium: "Inter_600SemiBold",
+  bold: "DMSans_700Bold",
+};
+
 const ThemeContext = createContext(null);
 
 export function ThemeProvider({ themes, colorScheme, children }) {
@@ -45,7 +51,13 @@ export function ThemeToggle() {
         paddingVertical: 8,
       }}
     >
-      <Text style={{ color: ink, fontSize: 12, fontWeight: "800" }}>
+      <Text
+        style={{
+          color: ink,
+          fontFamily: fontFamilies.bold,
+          fontSize: 12,
+        }}
+      >
         {isDark ? "Light mode" : "Dark mode"}
       </Text>
     </Pressable>

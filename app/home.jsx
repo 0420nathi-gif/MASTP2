@@ -1,5 +1,9 @@
-import { Link } from "expo-router";
-import React, { useState } from "react";
+import {
+  Link,
+  useLocalSearchParams,
+  useRouter,
+} from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -13,10 +17,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import { foodCategories } from "../constants/food-categories";
 import { useMenu } from "../constants/menu-context";
-import { ThemeToggle, useAppTheme } from "../constants/theme-context";
-
-const courses = ["Starter", "Main", "Dessert", "Drinks"];
+import {
+  fontFamilies,
+  ThemeToggle,
+  useAppTheme,
+} from "../constants/theme-context";
 
 const emptyForm = { name: "", description: "", course: "Main", price: "" };
 
@@ -24,9 +32,47 @@ export default function Home() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [confirmation, setConfirmation] = useState("");
-  const { addItem, menuItems } = useMenu();
+  const { addItem, updateItem, menuItems, isLoading, storageError } = useMenu();
+  const { editId } = useLocalSearchParams();
+  const router = useRouter();
+  const initializedEditId = useRef(null);
+  const editingItem =
+    typeof editId === "string"
+      ? menuItems.find((item) => item.id === editId)
+      : null;
   const theme = useAppTheme();
   const styles = createStyles(theme);
+
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (typeof editId === "string") {
+      if (initializedEditId.current === editId) return;
+      const item = menuItems.find((menuItem) => menuItem.id === editId);
+      if (!item) {
+        router.replace("/Menu");
+        return;
+      }
+
+      initializedEditId.current = editId;
+      setForm({
+        name: item.name,
+        description: item.description,
+        course: item.course,
+        price: item.price,
+      });
+      setErrors({});
+      setConfirmation("");
+      return;
+    }
+
+    if (initializedEditId.current !== null) {
+      setForm(emptyForm);
+      setErrors({});
+      setConfirmation("");
+    }
+    initializedEditId.current = null;
+  }, [editId, isLoading, menuItems, router]);
 
   const updateField = (field, value) => {
     setForm((current) => ({ ...current, [field]: value }));
@@ -48,24 +94,35 @@ export default function Home() {
     return Object.keys(nextErrors).length === 0;
   };
 
-  const addMenuItem = () => {
+  const saveMenuItem = () => {
+    if (isLoading || storageError) return;
     if (!validate()) return;
-    const newItem = {
+    const savedItem = {
       name: form.name.trim(),
       description: form.description.trim(),
       course: form.course,
       price: Number(form.price.replace(",", ".")).toFixed(2),
     };
-    addItem(newItem);
+
+    if (editingItem) {
+      updateItem(editingItem.id, savedItem);
+      router.replace("/Menu");
+      return;
+    }
+
+    addItem(savedItem);
     setForm(emptyForm);
     setErrors({});
-    setConfirmation(`${newItem.name} was added to your menu.`);
-    Alert.alert("Menu updated", `${newItem.name} is now on the menu.`);
+    setConfirmation(`${savedItem.name} was added to your menu.`);
+    Alert.alert("Menu updated", `${savedItem.name} is now on the menu.`);
   };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style={theme.background === "#20231F" ? "light" : "dark"} />
+      {storageError ? (
+        <Text style={styles.storageError}>{storageError}</Text>
+      ) : null}
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -91,8 +148,12 @@ export default function Home() {
           <ThemeToggle />
 
           <View style={styles.formCard}>
-            <Text style={styles.sectionEyebrow}>NEW DISH</Text>
-            <Text style={styles.sectionTitle}>Add to the menu</Text>
+            <Text style={styles.sectionEyebrow}>
+              {editingItem ? "EDIT DISH" : "NEW DISH"}
+            </Text>
+            <Text style={styles.sectionTitle}>
+              {editingItem ? "Update this dish" : "Add to the menu"}
+            </Text>
             <Field
               label="Dish name"
               value={form.name}
@@ -111,22 +172,29 @@ export default function Home() {
 
             <Text style={styles.label}>Course</Text>
             <View style={styles.courseRow}>
-              {courses.map((course) => (
+              {foodCategories.map((category) => (
                 <Pressable
-                  key={course}
-                  onPress={() => updateField("course", course)}
+                  key={category.name}
+                  onPress={() => updateField("course", category.name)}
                   style={[
                     styles.courseChip,
-                    form.course === course && styles.courseChipSelected,
+                    form.course === category.name && styles.courseChipSelected,
                   ]}
                 >
+                  <FontAwesome6
+                    name={category.icon}
+                    size={13}
+                    color={
+                      form.course === category.name ? theme.surface : theme.primary
+                    }
+                  />
                   <Text
                     style={[
                       styles.courseText,
-                      form.course === course && styles.courseTextSelected,
+                      form.course === category.name && styles.courseTextSelected,
                     ]}
                   >
-                    {course}
+                    {category.name}
                   </Text>
                 </Pressable>
               ))}
@@ -145,13 +213,20 @@ export default function Home() {
             />
 
             <Pressable
-              onPress={addMenuItem}
+              onPress={saveMenuItem}
+              disabled={isLoading || Boolean(storageError)}
               style={({ pressed }) => [
                 styles.addButton,
-                pressed && styles.buttonPressed,
+                (pressed || isLoading || storageError) && styles.buttonPressed,
               ]}
             >
-              <Text style={styles.addButtonText}>+ Add dish to menu</Text>
+              <Text style={styles.addButtonText}>
+                {isLoading
+                  ? "Loading saved menu..."
+                  : editingItem
+                    ? "Save changes"
+                    : "+ Add dish to menu"}
+              </Text>
             </Pressable>
             {confirmation ? (
               <View style={styles.confirmation}>
@@ -226,20 +301,21 @@ const createStyles = (theme) =>
     },
     eyebrow: {
       color: theme.primary,
+      fontFamily: fontFamilies.bold,
       fontSize: 11,
-      fontWeight: "800",
       letterSpacing: 1.5,
       marginBottom: 10,
     },
     title: {
       color: theme.ink,
+      fontFamily: fontFamilies.bold,
       fontSize: 32,
-      fontWeight: "800",
       lineHeight: 36,
       maxWidth: 260,
     },
     subtitle: {
       color: theme.muted,
+      fontFamily: fontFamilies.regular,
       fontSize: 15,
       lineHeight: 21,
       marginTop: 9,
@@ -254,11 +330,15 @@ const createStyles = (theme) =>
       alignItems: "center",
       marginTop: 5,
     },
-    countNumber: { color: theme.accent, fontSize: 23, fontWeight: "800" },
+    countNumber: {
+      color: theme.accent,
+      fontFamily: fontFamilies.bold,
+      fontSize: 23,
+    },
     countLabel: {
       color: theme.background,
+      fontFamily: fontFamilies.bold,
       fontSize: 9,
-      fontWeight: "800",
       letterSpacing: 1,
     },
     formCard: {
@@ -273,22 +353,22 @@ const createStyles = (theme) =>
     },
     sectionEyebrow: {
       color: theme.primary,
+      fontFamily: fontFamilies.bold,
       fontSize: 10,
-      fontWeight: "800",
       letterSpacing: 1.4,
       marginBottom: 5,
     },
     sectionTitle: {
       color: theme.ink,
+      fontFamily: fontFamilies.bold,
       fontSize: 22,
-      fontWeight: "800",
       marginBottom: 18,
     },
     fieldGroup: { marginBottom: 16 },
     label: {
       color: theme.label,
+      fontFamily: fontFamilies.medium,
       fontSize: 13,
-      fontWeight: "700",
       marginBottom: 8,
     },
     inputShell: {
@@ -302,24 +382,53 @@ const createStyles = (theme) =>
       paddingHorizontal: 13,
     },
     inputError: { borderColor: theme.error },
-    input: { flex: 1, color: theme.ink, fontSize: 15, paddingVertical: 0 },
+    input: {
+      flex: 1,
+      color: theme.ink,
+      fontFamily: fontFamilies.regular,
+      fontSize: 15,
+      paddingVertical: 0,
+    },
     textArea: { minHeight: 77, paddingTop: 13, paddingBottom: 13 },
-    prefix: { color: theme.muted, fontSize: 16, marginRight: 4 },
-    error: { color: theme.error, fontSize: 12, marginTop: 6 },
+    prefix: {
+      color: theme.muted,
+      fontFamily: fontFamilies.regular,
+      fontSize: 16,
+      marginRight: 4,
+    },
+    error: {
+      color: theme.error,
+      fontFamily: fontFamilies.regular,
+      fontSize: 12,
+      marginTop: 6,
+    },
+    storageError: {
+      backgroundColor: theme.error,
+      color: theme.surface,
+      fontFamily: fontFamilies.medium,
+      padding: 12,
+    },
     courseRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
     courseChip: {
+      alignItems: "center",
       borderWidth: 1,
       borderColor: theme.chipBorder,
       borderRadius: 20,
       paddingVertical: 9,
       paddingHorizontal: 14,
       backgroundColor: theme.inputBackground,
+      flexDirection: "row",
+      gap: 7,
     },
     courseChipSelected: {
       borderColor: theme.primary,
       backgroundColor: theme.primary,
     },
-    courseText: { color: theme.muted, fontSize: 13, fontWeight: "700" },
+    courseText: {
+      color: theme.muted,
+      fontFamily: fontFamilies.medium,
+      fontSize: 13,
+    },
     courseTextSelected: { color: theme.surface },
     addButton: {
       alignItems: "center",
@@ -329,7 +438,11 @@ const createStyles = (theme) =>
       paddingVertical: 15,
     },
     buttonPressed: { opacity: 0.8 },
-    addButtonText: { color: theme.surface, fontSize: 15, fontWeight: "800" },
+    addButtonText: {
+      color: theme.surface,
+      fontFamily: fontFamilies.bold,
+      fontSize: 15,
+    },
     confirmation: {
       alignItems: "center",
       flexDirection: "row",
@@ -338,11 +451,15 @@ const createStyles = (theme) =>
     },
     confirmationMark: {
       color: theme.success,
+      fontFamily: fontFamilies.bold,
       fontSize: 17,
-      fontWeight: "800",
       marginRight: 7,
     },
-    confirmationText: { color: theme.success, fontSize: 13, fontWeight: "700" },
+    confirmationText: {
+      color: theme.success,
+      fontFamily: fontFamilies.medium,
+      fontSize: 13,
+    },
     viewMenuButton: {
       alignItems: "center",
       borderColor: theme.ink,
@@ -351,7 +468,15 @@ const createStyles = (theme) =>
       marginTop: 24,
       paddingVertical: 14,
     },
-    viewMenuText: { color: theme.ink, fontSize: 14, fontWeight: "800" },
+    viewMenuText: {
+      color: theme.ink,
+      fontFamily: fontFamilies.bold,
+      fontSize: 14,
+    },
     contactLink: { alignItems: "center", paddingVertical: 14 },
-    contactLinkText: { color: theme.primary, fontSize: 14, fontWeight: "800" },
+    contactLinkText: {
+      color: theme.primary,
+      fontFamily: fontFamilies.bold,
+      fontSize: 14,
+    },
   });

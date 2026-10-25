@@ -12,23 +12,43 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import { ThemeToggle, useAppTheme } from "../constants/theme-context";
+import { fontFamilies, ThemeToggle, useAppTheme } from "../constants/theme-context";
 
 export default function Contact() {
   const theme = useAppTheme();
   const styles = createStyles(theme);
   const [message, setMessage] = useState("");
 
+  const openEmailDraft = async (body = "") => {
+    const bodyQuery = body ? `&body=${encodeURIComponent(body)}` : "";
+    try {
+      await Linking.openURL(
+        `mailto:0420nathi@gmail.com?subject=${encodeURIComponent(
+          "FRNA kitchen support",
+        )}${bodyQuery}`,
+      );
+      if (body) {
+        Alert.alert(
+          "Email draft opened",
+          "Review the message and tap Send in your email app.",
+        );
+      }
+    } catch (error) {
+      console.error("Could not open the email app.", error);
+      Alert.alert(
+        "Couldn't open email",
+        "Set up an email app on your device, or email 0420nathi@gmail.com directly.",
+      );
+    }
+  };
+
   const sendMessage = () => {
     if (!message.trim()) {
       Alert.alert("Message needed", "Write a message before sending.");
       return;
     }
-    Alert.alert(
-      "Message ready",
-      "Your message has been sent to the kitchen team.",
-    );
-    setMessage("");
+
+    openEmailDraft(message.trim());
   };
 
   return (
@@ -48,22 +68,14 @@ export default function Contact() {
         <ThemeToggle />
 
         <View style={styles.contactCard}>
-          <Text style={styles.cardLabel}>DIRECT LINE</Text>
-          <Pressable onPress={() => Linking.openURL("tel:+15550142424")}>
-            <Text style={styles.cardValue}>+1 (555) 014-2424</Text>
-          </Pressable>
-          <Text style={styles.cardHint}>Mon-Fri, 9:00 AM - 6:00 PM</Text>
-        </View>
-        <View style={styles.contactCard}>
           <Text style={styles.cardLabel}>EMAIL</Text>
           <Pressable
-            onPress={() => Linking.openURL("mailto:hello@serviceboard.app")}
+            accessibilityRole="link"
+            onPress={() => openEmailDraft()}
           >
-            <Text style={styles.cardValue}>hello@serviceboard.app</Text>
+            <Text style={styles.cardValue}>0420nathi@gmail.com</Text>
           </Pressable>
-          <Text style={styles.cardHint}>
-            Usually replies within one service
-          </Text>
+          <Text style={styles.cardHint}>Tap to open your email app.</Text>
         </View>
 
         <View style={styles.messageCard}>
@@ -79,14 +91,18 @@ export default function Contact() {
             style={styles.messageInput}
           />
           <Pressable
+            accessibilityRole="button"
             onPress={sendMessage}
             style={({ pressed }) => [
               styles.sendButton,
               pressed && styles.pressed,
             ]}
           >
-            <Text style={styles.sendButtonText}>Send message</Text>
+            <Text style={styles.sendButtonText}>Open email draft</Text>
           </Pressable>
+          <Text style={styles.cardHint}>
+            Your email app will open with this message ready to review and send.
+          </Text>
         </View>
 
         <Link href="/Home" asChild>
@@ -110,20 +126,21 @@ const createStyles = (theme) =>
     content: { padding: 24, paddingBottom: 44 },
     eyebrow: {
       color: theme.primary,
+      fontFamily: fontFamilies.bold,
       fontSize: 10,
-      fontWeight: "800",
       letterSpacing: 1.4,
       marginBottom: 10,
     },
     title: {
       color: theme.ink,
+      fontFamily: fontFamilies.bold,
       fontSize: 32,
-      fontWeight: "800",
       lineHeight: 37,
       maxWidth: 330,
     },
     subtitle: {
       color: theme.muted,
+      fontFamily: fontFamilies.regular,
       fontSize: 15,
       lineHeight: 22,
       marginBottom: 25,
@@ -137,13 +154,22 @@ const createStyles = (theme) =>
     },
     cardLabel: {
       color: theme.primary,
+      fontFamily: fontFamilies.bold,
       fontSize: 10,
-      fontWeight: "800",
       letterSpacing: 1.3,
       marginBottom: 8,
     },
-    cardValue: { color: theme.ink, fontSize: 17, fontWeight: "800" },
-    cardHint: { color: theme.muted, fontSize: 13, marginTop: 5 },
+    cardValue: {
+      color: theme.ink,
+      fontFamily: fontFamilies.bold,
+      fontSize: 17,
+    },
+    cardHint: {
+      color: theme.muted,
+      fontFamily: fontFamilies.regular,
+      fontSize: 13,
+      marginTop: 5,
+    },
     messageCard: {
       backgroundColor: theme.surface,
       borderRadius: 16,
@@ -152,8 +178,8 @@ const createStyles = (theme) =>
     },
     messageTitle: {
       color: theme.ink,
+      fontFamily: fontFamilies.bold,
       fontSize: 18,
-      fontWeight: "800",
       marginBottom: 13,
     },
     messageInput: {
@@ -162,6 +188,7 @@ const createStyles = (theme) =>
       borderRadius: 11,
       borderWidth: 1,
       color: theme.ink,
+      fontFamily: fontFamilies.regular,
       fontSize: 15,
       height: 105,
       padding: 13,
@@ -174,7 +201,11 @@ const createStyles = (theme) =>
       paddingVertical: 14,
     },
     pressed: { opacity: 0.8 },
-    sendButtonText: { color: theme.surface, fontSize: 15, fontWeight: "800" },
+    sendButtonText: {
+      color: theme.surface,
+      fontFamily: fontFamilies.bold,
+      fontSize: 15,
+    },
     backButton: {
       alignItems: "center",
       borderColor: theme.ink,
@@ -183,5 +214,9 @@ const createStyles = (theme) =>
       marginTop: 17,
       paddingVertical: 13,
     },
-    backButtonText: { color: theme.ink, fontSize: 14, fontWeight: "800" },
+    backButtonText: {
+      color: theme.ink,
+      fontFamily: fontFamilies.bold,
+      fontSize: 14,
+    },
   });
