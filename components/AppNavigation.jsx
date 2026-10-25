@@ -6,10 +6,10 @@ import { HoverablePressable } from "./InteractiveControls";
 import { fontFamilies, useAppTheme } from "../constants/theme-context";
 
 const destinations = [
-  { href: "/Home", label: "Add dish", icon: "pen-to-square" },
+  { href: "/home", label: "Add dish", icon: "pen-to-square" },
   { href: "/Menu", label: "Menu", icon: "utensils" },
   { href: "/Stats", label: "Stats", icon: "chart-simple" },
-  { href: "/Contact", label: "Support", icon: "circle-question" },
+  { href: "/contact", label: "Support", icon: "circle-question" },
 ];
 
 export default function AppNavigation() {
@@ -28,7 +28,10 @@ export default function AppNavigation() {
               accessibilityRole="link"
               accessibilityLabel={`${destination.label}${selected ? ", current page" : ""}`}
               accessibilityState={{ selected }}
-              style={[styles.destination, selected && styles.selectedDestination]}
+              style={StyleSheet.flatten([
+                styles.destination,
+                selected && styles.selectedDestination,
+              ])}
             >
               <FontAwesome6
                 name={destination.icon}
@@ -36,7 +39,10 @@ export default function AppNavigation() {
                 color={selected ? theme.primary : theme.muted}
               />
               <Text
-                style={[styles.label, selected && styles.selectedLabel]}
+                style={StyleSheet.flatten([
+                  styles.label,
+                  selected && styles.selectedLabel,
+                ])}
               >
                 {destination.label}
               </Text>

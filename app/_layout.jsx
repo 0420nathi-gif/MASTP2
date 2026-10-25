@@ -42,14 +42,14 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
-            name="Home"
+            name="home"
             options={{
               title: "Home",
               headerShown: false,
             }}
           />
           <Stack.Screen
-            name="Contact"
+            name="contact"
             options={{ title: "Contact", headerShown: false }}
           />
           <Stack.Screen

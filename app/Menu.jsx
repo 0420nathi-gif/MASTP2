@@ -286,7 +286,7 @@ export default function About() {
               </View>
               <View style={styles.actions}>
                 <Link
-                  href={{ pathname: "/Home", params: { editId: item.id } }}
+                  href={{ pathname: "/home", params: { editId: item.id } }}
                   asChild
                 >
                   <HoverablePressable
@@ -346,7 +346,7 @@ export default function About() {
           ))
         )}
 
-        <Link href="/Home" asChild>
+        <Link href="/home" asChild>
           <HoverablePressable
             disabled={!canModifyMenu}
             style={styles.addButton}

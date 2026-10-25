@@ -14,7 +14,7 @@ export default function SplashScreen() {
   const styles = createStyles(theme);
 
   useEffect(() => {
-    if (!isLoading) router.replace("/Home");
+    if (!isLoading) router.replace("/home");
   }, [isLoading, router]);
 
   return (
