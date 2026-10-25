@@ -4,7 +4,6 @@ import React, { useMemo, useState } from "react";
 import {
   Alert,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -14,6 +13,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import HelpTip from "../components/HelpTip";
+import {
+  HoverablePressable,
+  HoverableView,
+} from "../components/InteractiveControls";
 import { getCategoryIcon } from "../constants/food-categories";
 import { useMenu } from "../constants/menu-context";
 import {
@@ -87,7 +90,10 @@ export default function About() {
           saved menu.
         </HelpTip>
 
-        <View style={styles.searchField}>
+        <HoverableView
+          style={styles.searchField}
+          hoverStyle={styles.searchFieldHovered}
+        >
           <FontAwesome6 name="magnifying-glass" size={16} color={theme.muted} />
           <TextInput
             accessibilityLabel="Search menu"
@@ -99,16 +105,16 @@ export default function About() {
             style={styles.searchInput}
           />
           {search ? (
-            <Pressable
+            <HoverablePressable
               accessibilityRole="button"
               accessibilityLabel="Clear search"
               hitSlop={8}
               onPress={() => setSearch("")}
             >
               <FontAwesome6 name="xmark" size={15} color={theme.muted} />
-            </Pressable>
+            </HoverablePressable>
           ) : null}
-        </View>
+        </HoverableView>
 
         {isLoading ? (
           <Text style={styles.emptyText}>Loading your saved menu...</Text>
@@ -172,7 +178,7 @@ export default function About() {
                   href={{ pathname: "/Home", params: { editId: item.id } }}
                   asChild
                 >
-                  <Pressable
+                  <HoverablePressable
                     accessibilityRole="button"
                     disabled={!canModifyMenu}
                     style={styles.editButton}
@@ -183,9 +189,9 @@ export default function About() {
                       color={theme.ink}
                     />
                     <Text style={styles.editButtonText}>Edit</Text>
-                  </Pressable>
+                  </HoverablePressable>
                 </Link>
-                <Pressable
+                <HoverablePressable
                   accessibilityRole="button"
                   accessibilityLabel={
                     item.available === false
@@ -204,8 +210,8 @@ export default function About() {
                   <Text style={styles.availabilityButtonText}>
                     {item.available === false ? "Available" : "Unavailable"}
                   </Text>
-                </Pressable>
-                <Pressable
+                </HoverablePressable>
+                <HoverablePressable
                   accessibilityRole="button"
                   accessibilityLabel={`Delete ${item.name}`}
                   onPress={() => confirmRemove(item)}
@@ -218,26 +224,29 @@ export default function About() {
                     color={theme.error}
                   />
                   <Text style={styles.deleteButtonText}>Delete</Text>
-                </Pressable>
+                </HoverablePressable>
               </View>
             </View>
           ))
         )}
 
         <Link href="/Home" asChild>
-          <Pressable disabled={!canModifyMenu} style={styles.addButton}>
+          <HoverablePressable
+            disabled={!canModifyMenu}
+            style={styles.addButton}
+          >
             <Text style={styles.addButtonText}>+ Add another dish</Text>
-          </Pressable>
+          </HoverablePressable>
         </Link>
         <Link href="/Contact" asChild>
-          <Pressable style={styles.contactLink}>
+          <HoverablePressable style={styles.contactLink}>
             <Text style={styles.contactLinkText}>Contact kitchen support</Text>
-          </Pressable>
+          </HoverablePressable>
         </Link>
         <Link href="/Stats" asChild>
-          <Pressable style={styles.contactLink}>
+          <HoverablePressable style={styles.contactLink}>
             <Text style={styles.contactLinkText}>View menu statistics</Text>
-          </Pressable>
+          </HoverablePressable>
         </Link>
       </ScrollView>
     </SafeAreaView>
@@ -312,6 +321,10 @@ const createStyles = (theme) =>
       marginBottom: 18,
       minHeight: 48,
       paddingHorizontal: 14,
+    },
+    searchFieldHovered: {
+      borderColor: theme.primary,
+      backgroundColor: theme.surface,
     },
     searchInput: {
       color: theme.ink,

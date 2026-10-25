@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import {
   Alert,
   Linking,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +11,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import {
+  HoverablePressable,
+  HoverableView,
+} from "../components/InteractiveControls";
 import { fontFamilies, ThemeToggle, useAppTheme } from "../constants/theme-context";
 
 export default function Contact() {
@@ -69,51 +72,53 @@ export default function Contact() {
 
         <View style={styles.contactCard}>
           <Text style={styles.cardLabel}>EMAIL</Text>
-          <Pressable
+          <HoverablePressable
             accessibilityRole="link"
             onPress={() => openEmailDraft()}
           >
             <Text style={styles.cardValue}>0420nathi@gmail.com</Text>
-          </Pressable>
+          </HoverablePressable>
           <Text style={styles.cardHint}>Tap to open your email app.</Text>
         </View>
 
         <View style={styles.messageCard}>
           <Text style={styles.cardLabel}>SEND A MESSAGE</Text>
           <Text style={styles.messageTitle}>What can we help with?</Text>
-          <TextInput
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            textAlignVertical="top"
-            placeholder="Tell us what's on your mind..."
-            placeholderTextColor={theme.placeholder}
-            style={styles.messageInput}
-          />
-          <Pressable
+          <HoverableView
+            style={styles.messageInputShell}
+            hoverStyle={styles.messageInputHovered}
+          >
+            <TextInput
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              textAlignVertical="top"
+              placeholder="Tell us what's on your mind..."
+              placeholderTextColor={theme.placeholder}
+              style={styles.messageInput}
+            />
+          </HoverableView>
+          <HoverablePressable
             accessibilityRole="button"
             onPress={sendMessage}
-            style={({ pressed }) => [
-              styles.sendButton,
-              pressed && styles.pressed,
-            ]}
+            style={styles.sendButton}
           >
             <Text style={styles.sendButtonText}>Open email draft</Text>
-          </Pressable>
+          </HoverablePressable>
           <Text style={styles.cardHint}>
             Your email app will open with this message ready to review and send.
           </Text>
         </View>
 
         <Link href="/Home" asChild>
-          <Pressable style={styles.backButton}>
+          <HoverablePressable style={styles.backButton}>
             <Text style={styles.backButtonText}>Back to menu builder</Text>
-          </Pressable>
+          </HoverablePressable>
         </Link>
         <Link href="/Menu" asChild>
-          <Pressable style={styles.backButton}>
+          <HoverablePressable style={styles.backButton}>
             <Text style={styles.backButtonText}>View current menu</Text>
-          </Pressable>
+          </HoverablePressable>
         </Link>
       </ScrollView>
     </SafeAreaView>
@@ -182,11 +187,19 @@ const createStyles = (theme) =>
       fontSize: 18,
       marginBottom: 13,
     },
-    messageInput: {
+    messageInputShell: {
       backgroundColor: theme.inputBackground,
       borderColor: theme.inputBorder,
       borderRadius: 11,
       borderWidth: 1,
+    },
+    messageInputHovered: {
+      borderColor: theme.primary,
+      backgroundColor: theme.surface,
+    },
+    messageInput: {
+      backgroundColor: "transparent",
+      borderRadius: 11,
       color: theme.ink,
       fontFamily: fontFamilies.regular,
       fontSize: 15,
@@ -200,7 +213,6 @@ const createStyles = (theme) =>
       marginTop: 13,
       paddingVertical: 14,
     },
-    pressed: { opacity: 0.8 },
     sendButtonText: {
       color: theme.surface,
       fontFamily: fontFamilies.bold,

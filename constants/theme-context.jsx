@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
-import { Pressable, Text } from "react-native";
+import { Text } from "react-native";
+import { HoverablePressable } from "../components/InteractiveControls";
 
 export const fontFamilies = {
   regular: "Inter_400Regular",
@@ -36,7 +37,7 @@ export function ThemeToggle() {
   const { isDark, toggleTheme, ink, surface } = useAppTheme();
 
   return (
-    <Pressable
+    <HoverablePressable
       onPress={toggleTheme}
       accessibilityRole="button"
       accessibilityLabel={
@@ -60,6 +61,6 @@ export function ThemeToggle() {
       >
         {isDark ? "Light mode" : "Dark mode"}
       </Text>
-    </Pressable>
+    </HoverablePressable>
   );
 }

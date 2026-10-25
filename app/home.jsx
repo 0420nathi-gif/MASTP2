@@ -8,7 +8,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -19,6 +18,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import HelpTip from "../components/HelpTip";
+import {
+  HoverablePressable,
+  HoverableView,
+} from "../components/InteractiveControls";
 import { foodCategories } from "../constants/food-categories";
 import { useMenu } from "../constants/menu-context";
 import {
@@ -178,7 +181,7 @@ export default function Home() {
             <Text style={styles.label}>Course</Text>
             <View style={styles.courseRow}>
               {foodCategories.map((category) => (
-                <Pressable
+                <HoverablePressable
                   key={category.name}
                   onPress={() => updateField("course", category.name)}
                   style={[
@@ -201,7 +204,7 @@ export default function Home() {
                   >
                     {category.name}
                   </Text>
-                </Pressable>
+                </HoverablePressable>
               ))}
             </View>
             {errors.course ? (
@@ -217,7 +220,7 @@ export default function Home() {
               prefix="R"
             />
 
-            <Pressable
+            <HoverablePressable
               onPress={saveMenuItem}
               disabled={isLoading || Boolean(storageError)}
               style={({ pressed }) => [
@@ -232,7 +235,7 @@ export default function Home() {
                     ? "Save changes"
                     : "+ Add dish to menu"}
               </Text>
-            </Pressable>
+            </HoverablePressable>
             {confirmation ? (
               <View style={styles.confirmation}>
                 <Text style={styles.confirmationMark}>✓</Text>
@@ -242,21 +245,21 @@ export default function Home() {
           </View>
 
           <Link href="/Menu" asChild>
-            <Pressable style={styles.viewMenuButton}>
+            <HoverablePressable style={styles.viewMenuButton}>
               <Text style={styles.viewMenuText}>View current menu →</Text>
-            </Pressable>
+            </HoverablePressable>
           </Link>
           <Link href="/Stats" asChild>
-            <Pressable style={styles.statsLink}>
+            <HoverablePressable style={styles.statsLink}>
               <Text style={styles.statsLinkText}>View menu statistics</Text>
-            </Pressable>
+            </HoverablePressable>
           </Link>
           <Link href="/Contact" asChild>
-            <Pressable style={styles.contactLink}>
+            <HoverablePressable style={styles.contactLink}>
               <Text style={styles.contactLinkText}>
                 Contact kitchen support
               </Text>
-            </Pressable>
+            </HoverablePressable>
           </Link>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -280,7 +283,10 @@ function Field({
   return (
     <View style={styles.fieldGroup}>
       <Text style={styles.label}>{label}</Text>
-      <View style={[styles.inputShell, error && styles.inputError]}>
+      <HoverableView
+        style={[styles.inputShell, error && styles.inputError]}
+        hoverStyle={error ? null : styles.inputHovered}
+      >
         {prefix ? <Text style={styles.prefix}>{prefix}</Text> : null}
         <TextInput
           value={value}
@@ -292,7 +298,7 @@ function Field({
           keyboardType={keyboardType}
           textAlignVertical={multiline ? "top" : "center"}
         />
-      </View>
+      </HoverableView>
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
@@ -392,6 +398,10 @@ const createStyles = (theme) =>
       paddingHorizontal: 13,
     },
     inputError: { borderColor: theme.error },
+    inputHovered: {
+      borderColor: theme.primary,
+      backgroundColor: theme.surface,
+    },
     input: {
       flex: 1,
       color: theme.ink,

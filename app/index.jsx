@@ -23,8 +23,8 @@ export default function SplashScreen() {
         <View style={styles.iconFrame}>
           <FontAwesome6 name="bowl-food" size={60} color={theme.primary} />
         </View>
-        <Text style={styles.brand}>FRNA</Text>
-        <Text style={styles.tagline}>Made for the love of good food.</Text>
+        <Text style={styles.brand}>FoodManager</Text>
+        <Text style={styles.tagline}>By VertAgency.</Text>
       </View>
       <Text style={styles.footer}>YOUR KITCHEN, READY TO SERVE</Text>
     </SafeAreaView>

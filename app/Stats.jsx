@@ -2,7 +2,6 @@ import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
 import { Link } from "expo-router";
 import React from "react";
 import {
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -11,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import HelpTip from "../components/HelpTip";
+import { HoverablePressable } from "../components/InteractiveControls";
 import { getMenuStatistics } from "../constants/menu-utils.cjs";
 import { useMenu } from "../constants/menu-context";
 import {
@@ -92,14 +92,14 @@ export default function Stats() {
         ))}
 
         <Link href="/Menu" asChild>
-          <Pressable style={styles.primaryButton}>
+          <HoverablePressable style={styles.primaryButton}>
             <Text style={styles.primaryButtonText}>Manage your menu</Text>
-          </Pressable>
+          </HoverablePressable>
         </Link>
         <Link href="/Home" asChild>
-          <Pressable style={styles.secondaryButton}>
+          <HoverablePressable style={styles.secondaryButton}>
             <Text style={styles.secondaryButtonText}>Add a dish</Text>
-          </Pressable>
+          </HoverablePressable>
         </Link>
       </ScrollView>
     </SafeAreaView>
