@@ -18,7 +18,7 @@ export default function SplashScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar style={theme.background === "#20231F" ? "light" : "dark"} />
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
       <View style={styles.content}>
         <View style={styles.iconFrame}>
           <FontAwesome6 name="bowl-food" size={60} color={theme.primary} />

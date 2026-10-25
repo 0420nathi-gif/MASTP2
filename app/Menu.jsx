@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
+import HelpTip from "../components/HelpTip";
 import { getCategoryIcon } from "../constants/food-categories";
 import { useMenu } from "../constants/menu-context";
 import {
@@ -23,7 +24,13 @@ import {
 import { filterMenuItems } from "../constants/menu-utils.cjs";
 
 export default function About() {
-  const { menuItems, removeItem, isLoading, storageError } = useMenu();
+  const {
+    menuItems,
+    removeItem,
+    toggleItemAvailability,
+    isLoading,
+    storageError,
+  } = useMenu();
   const canModifyMenu = !isLoading && !storageError;
   const [search, setSearch] = useState("");
   const theme = useAppTheme();
@@ -49,7 +56,7 @@ export default function About() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      <StatusBar style={theme.background === "#20231F" ? "light" : "dark"} />
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
@@ -73,6 +80,12 @@ export default function About() {
         {storageError ? (
           <Text style={styles.storageError}>{storageError}</Text>
         ) : null}
+
+        <HelpTip title="Manage your dishes">
+          Search by dish name, description, or course. Edit to update a dish,
+          mark it unavailable when it is out of stock, or delete it from your
+          saved menu.
+        </HelpTip>
 
         <View style={styles.searchField}>
           <FontAwesome6 name="magnifying-glass" size={16} color={theme.muted} />
@@ -134,6 +147,26 @@ export default function About() {
               </View>
               <Text style={styles.itemName}>{item.name}</Text>
               <Text style={styles.itemDescription}>{item.description}</Text>
+              <View
+                style={[
+                  styles.availabilityTag,
+                  item.available === false && styles.unavailableTag,
+                ]}
+              >
+                <FontAwesome6
+                  name={item.available === false ? "circle-xmark" : "circle-check"}
+                  size={12}
+                  color={item.available === false ? theme.error : theme.success}
+                />
+                <Text
+                  style={[
+                    styles.availabilityText,
+                    item.available === false && styles.unavailableText,
+                  ]}
+                >
+                  {item.available === false ? "UNAVAILABLE" : "AVAILABLE"}
+                </Text>
+              </View>
               <View style={styles.actions}>
                 <Link
                   href={{ pathname: "/Home", params: { editId: item.id } }}
@@ -152,6 +185,26 @@ export default function About() {
                     <Text style={styles.editButtonText}>Edit</Text>
                   </Pressable>
                 </Link>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    item.available === false
+                      ? `Mark ${item.name} available`
+                      : `Mark ${item.name} unavailable`
+                  }
+                  disabled={!canModifyMenu}
+                  onPress={() => toggleItemAvailability(item.id)}
+                  style={styles.availabilityButton}
+                >
+                  <FontAwesome6
+                    name={item.available === false ? "circle-check" : "ban"}
+                    size={12}
+                    color={theme.primary}
+                  />
+                  <Text style={styles.availabilityButtonText}>
+                    {item.available === false ? "Available" : "Unavailable"}
+                  </Text>
+                </Pressable>
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={`Delete ${item.name}`}
@@ -179,6 +232,11 @@ export default function About() {
         <Link href="/Contact" asChild>
           <Pressable style={styles.contactLink}>
             <Text style={styles.contactLinkText}>Contact kitchen support</Text>
+          </Pressable>
+        </Link>
+        <Link href="/Stats" asChild>
+          <Pressable style={styles.contactLink}>
+            <Text style={styles.contactLinkText}>View menu statistics</Text>
           </Pressable>
         </Link>
       </ScrollView>
@@ -329,21 +387,45 @@ const createStyles = (theme) =>
       lineHeight: 19,
       marginTop: 5,
     },
+    availabilityTag: {
+      alignSelf: "flex-start",
+      backgroundColor: theme.tagBackground,
+      borderRadius: 20,
+      flexDirection: "row",
+      gap: 6,
+      marginTop: 11,
+      paddingHorizontal: 9,
+      paddingVertical: 6,
+    },
+    unavailableTag: { backgroundColor: `${theme.error}18` },
+    availabilityText: {
+      color: theme.success,
+      fontFamily: fontFamilies.bold,
+      fontSize: 9,
+      letterSpacing: 0.6,
+    },
+    unavailableText: { color: theme.error },
     actions: {
       borderTopColor: theme.chipBorder,
       borderTopWidth: 1,
       flexDirection: "row",
-      gap: 18,
+      gap: 12,
       marginTop: 15,
       paddingTop: 12,
     },
-    editButton: { alignItems: "center", flexDirection: "row", gap: 7 },
+    editButton: { alignItems: "center", flexDirection: "row", gap: 5 },
     editButtonText: {
       color: theme.ink,
       fontFamily: fontFamilies.medium,
       fontSize: 13,
     },
-    deleteButton: { alignItems: "center", flexDirection: "row", gap: 7 },
+    availabilityButton: { alignItems: "center", flexDirection: "row", gap: 5 },
+    availabilityButtonText: {
+      color: theme.primary,
+      fontFamily: fontFamilies.medium,
+      fontSize: 12,
+    },
+    deleteButton: { alignItems: "center", flexDirection: "row", gap: 5 },
     deleteButtonText: {
       color: theme.error,
       fontFamily: fontFamilies.medium,

@@ -53,7 +53,7 @@ export default function Contact() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
-      <StatusBar style={theme.background === "#20231F" ? "light" : "dark"} />
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
       <ScrollView
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"

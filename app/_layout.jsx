@@ -52,6 +52,10 @@ export default function RootLayout() {
             name="Contact"
             options={{ title: "Contact", headerShown: false }}
           />
+          <Stack.Screen
+            name="Stats"
+            options={{ title: "Menu statistics", headerShown: false }}
+          />
         </Stack>
       </MenuProvider>
     </ThemeProvider>

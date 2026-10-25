@@ -2,9 +2,12 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const {
   addMenuItem,
+  countAvailableMenuItems,
   filterMenuItems,
+  getMenuStatistics,
   isMenuItem,
   removeMenuItem,
+  toggleMenuItemAvailability,
   updateMenuItem,
 } = require("../constants/menu-utils.cjs");
 
@@ -36,6 +39,7 @@ test("filters dishes by name, description, and course without case sensitivity",
 test("validates saved menu item records", () => {
   assert.equal(isMenuItem(menuItems[0]), true);
   assert.equal(isMenuItem({ ...menuItems[0], price: 18 }), false);
+  assert.equal(isMenuItem({ ...menuItems[0], available: "yes" }), false);
   assert.equal(isMenuItem(null), false);
 });
 
@@ -48,6 +52,7 @@ test("adds, updates, and removes dishes without changing other records", () => {
   });
   assert.equal(added.length, 3);
   assert.ok(added[0].id);
+  assert.equal(added[0].available, true);
   assert.deepEqual(added.slice(1), menuItems);
 
   const updated = updateMenuItem(added, "1", {
@@ -61,5 +66,38 @@ test("adds, updates, and removes dishes without changing other records", () => {
   assert.deepEqual(
     removed.map((item) => item.id),
     [added[0].id, "1"],
+  );
+});
+
+test("tracks availability while treating existing dishes as available", () => {
+  assert.equal(countAvailableMenuItems(menuItems), menuItems.length);
+
+  const unavailable = toggleMenuItemAvailability(menuItems, "1");
+  assert.equal(unavailable[0].available, false);
+  assert.equal(countAvailableMenuItems(unavailable), 1);
+
+  const availableAgain = toggleMenuItemAvailability(unavailable, "1");
+  assert.equal(availableAgain[0].available, true);
+  assert.equal(countAvailableMenuItems(availableAgain), 2);
+});
+
+test("calculates total items, average price, and available items", () => {
+  assert.deepEqual(getMenuStatistics([]), {
+    totalItems: 0,
+    averagePrice: 0,
+    availableItems: 0,
+  });
+  assert.deepEqual(getMenuStatistics(menuItems), {
+    totalItems: 2,
+    averagePrice: 13.75,
+    availableItems: 2,
+  });
+  assert.deepEqual(
+    getMenuStatistics(toggleMenuItemAvailability(menuItems, "1")),
+    {
+      totalItems: 2,
+      averagePrice: 13.75,
+      availableItems: 1,
+    },
   );
 });

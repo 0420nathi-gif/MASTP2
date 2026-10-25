@@ -4,6 +4,7 @@ import {
   addMenuItem as addMenuItemToList,
   isMenuItem,
   removeMenuItem as removeMenuItemFromList,
+  toggleMenuItemAvailability,
   updateMenuItem as updateMenuItemInList,
 } from "./menu-utils.cjs";
 
@@ -79,6 +80,10 @@ export function MenuProvider({ children }) {
     setMenuItems((current) => removeMenuItemFromList(current, id));
   };
 
+  const toggleItemAvailability = (id) => {
+    setMenuItems((current) => toggleMenuItemAvailability(current, id));
+  };
+
   return (
     <MenuContext.Provider
       value={{
@@ -86,6 +91,7 @@ export function MenuProvider({ children }) {
         addItem,
         updateItem,
         removeItem,
+        toggleItemAvailability,
         isLoading,
         storageError,
       }}

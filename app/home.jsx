@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import FontAwesome6 from "@expo/vector-icons/FontAwesome6";
+import HelpTip from "../components/HelpTip";
 import { foodCategories } from "../constants/food-categories";
 import { useMenu } from "../constants/menu-context";
 import {
@@ -119,7 +120,7 @@ export default function Home() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
-      <StatusBar style={theme.background === "#20231F" ? "light" : "dark"} />
+      <StatusBar style={theme.isDark ? "light" : "dark"} />
       {storageError ? (
         <Text style={styles.storageError}>{storageError}</Text>
       ) : null}
@@ -135,7 +136,7 @@ export default function Home() {
           <View style={styles.header}>
             <View>
               <Text style={styles.eyebrow}>FOODIE'S MENU MANAGER</Text>
-              <Text style={styles.title}>By Christoffel.</Text>
+              <Text style={styles.title}>By Sisonke.</Text>
               <Text style={styles.subtitle}>
                 For every dish, detail, and price ready for service.
               </Text>
@@ -146,6 +147,10 @@ export default function Home() {
             </View>
           </View>
           <ThemeToggle />
+          <HelpTip title="Getting started">
+            Add a dish name, description, course, and price, then tap Add dish.
+            Your menu is saved automatically.
+          </HelpTip>
 
           <View style={styles.formCard}>
             <Text style={styles.sectionEyebrow}>
@@ -239,6 +244,11 @@ export default function Home() {
           <Link href="/Menu" asChild>
             <Pressable style={styles.viewMenuButton}>
               <Text style={styles.viewMenuText}>View current menu →</Text>
+            </Pressable>
+          </Link>
+          <Link href="/Stats" asChild>
+            <Pressable style={styles.statsLink}>
+              <Text style={styles.statsLinkText}>View menu statistics</Text>
             </Pressable>
           </Link>
           <Link href="/Contact" asChild>
@@ -470,6 +480,12 @@ const createStyles = (theme) =>
     },
     viewMenuText: {
       color: theme.ink,
+      fontFamily: fontFamilies.bold,
+      fontSize: 14,
+    },
+    statsLink: { alignItems: "center", paddingVertical: 12 },
+    statsLinkText: {
+      color: theme.primary,
       fontFamily: fontFamilies.bold,
       fontSize: 14,
     },
