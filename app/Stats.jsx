@@ -14,7 +14,6 @@ import { getMenuStatistics } from "../constants/menu-utils.cjs";
 import { useMenu } from "../constants/menu-context";
 import {
   fontFamilies,
-  ThemeToggle,
   useAppTheme,
 } from "../constants/theme-context";
 
@@ -55,7 +54,6 @@ export default function Stats() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <ThemeToggle />
         <Text style={styles.eyebrow}>MENU OVERVIEW</Text>
         <Text style={styles.title}>Menu statistics</Text>
         <Text style={styles.subtitle}>

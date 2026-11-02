@@ -1,6 +1,5 @@
-import React, { createContext, useContext, useState } from "react";
-import { Text } from "react-native";
-import { HoverablePressable } from "../components/InteractiveControls";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { AppState } from "react-native";
 
 export const fontFamilies = {
   regular: "Inter_400Regular",
@@ -10,16 +9,33 @@ export const fontFamilies = {
 
 const ThemeContext = createContext(null);
 
-export function ThemeProvider({ themes, colorScheme, children }) {
-  const [isDark, setIsDark] = useState(colorScheme === "dark");
+function isNightTime() {
+  const hour = new Date().getHours();
+  return hour >= 18 || hour < 6;
+}
+
+export function ThemeProvider({ themes, children }) {
+  const [isDark, setIsDark] = useState(isNightTime);
   const activeTheme = isDark ? themes.dark : themes.light;
+
+  useEffect(() => {
+    const updateTheme = () => setIsDark(isNightTime());
+    const interval = setInterval(updateTheme, 60_000);
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") updateTheme();
+    });
+
+    return () => {
+      clearInterval(interval);
+      subscription.remove();
+    };
+  }, []);
 
   return (
     <ThemeContext.Provider
       value={{
         ...activeTheme,
         isDark,
-        toggleTheme: () => setIsDark((current) => !current),
       }}
     >
       {children}
@@ -31,37 +47,4 @@ export function useAppTheme() {
   const theme = useContext(ThemeContext);
   if (!theme) throw new Error("useAppTheme must be used inside ThemeProvider");
   return theme;
-}
-
-export function ThemeToggle() {
-  const { isDark, toggleTheme, ink, surface } = useAppTheme();
-
-  return (
-    <HoverablePressable
-      onPress={toggleTheme}
-      accessibilityRole="button"
-      accessibilityLabel={
-        isDark ? "Switch to light mode" : "Switch to dark mode"
-      }
-      style={{
-        alignSelf: "flex-end",
-        borderColor: ink,
-        borderRadius: 20,
-        borderWidth: 1,
-        marginBottom: 16,
-        paddingHorizontal: 13,
-        paddingVertical: 8,
-      }}
-    >
-      <Text
-        style={{
-          color: ink,
-          fontFamily: fontFamilies.bold,
-          fontSize: 12,
-        }}
-      >
-        {isDark ? "Light mode" : "Dark mode"}
-      </Text>
-    </HoverablePressable>
-  );
 }

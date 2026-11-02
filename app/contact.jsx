@@ -17,7 +17,7 @@ import {
   HoverableView,
 } from "../components/InteractiveControls";
 import AppNavigation from "../components/AppNavigation";
-import { fontFamilies, ThemeToggle, useAppTheme } from "../constants/theme-context";
+import { fontFamilies, useAppTheme } from "../constants/theme-context";
 
 export default function Contact() {
   const theme = useAppTheme();
@@ -69,7 +69,6 @@ export default function Contact() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <ThemeToggle />
           <Text style={styles.eyebrow}>KITCHEN SUPPORT</Text>
           <Text style={styles.title}>Let's keep service moving.</Text>
           <Text style={styles.subtitle}>

@@ -25,7 +25,6 @@ import {
 import { useMenu } from "../constants/menu-context";
 import {
   fontFamilies,
-  ThemeToggle,
   useAppTheme,
 } from "../constants/theme-context";
 import { filterMenuItems } from "../constants/menu-utils.cjs";
@@ -81,7 +80,6 @@ export default function About() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ThemeToggle />
         <Text style={styles.eyebrow}>CURRENT MENU</Text>
         <View style={styles.titleRow}>
           <View>

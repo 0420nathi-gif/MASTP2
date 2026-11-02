@@ -1,8 +1,4 @@
-import {
-  Link,
-  useLocalSearchParams,
-  useRouter,
-} from "expo-router";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -26,7 +22,6 @@ import { foodCategories } from "../constants/food-categories";
 import { useMenu } from "../constants/menu-context";
 import {
   fontFamilies,
-  ThemeToggle,
   useAppTheme,
 } from "../constants/theme-context";
 
@@ -150,7 +145,6 @@ export default function Home() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <ThemeToggle />
           <View style={styles.header}>
             <View>
               <Text style={styles.eyebrow}>FOODIE'S MENU MANAGER</Text>
@@ -163,30 +157,6 @@ export default function Home() {
               <Text style={styles.countNumber}>{menuItems.length}</Text>
               <Text style={styles.countLabel}>DISHES</Text>
             </View>
-          </View>
-          <View style={styles.quickNavigation}>
-            <Link href="/Menu" asChild>
-              <HoverablePressable
-                accessibilityRole="link"
-                style={styles.quickNavigationButton}
-              >
-                <FontAwesome6 name="utensils" size={14} color={theme.primary} />
-                <Text style={styles.quickNavigationText}>Menu</Text>
-              </HoverablePressable>
-            </Link>
-            <Link href="/Stats" asChild>
-              <HoverablePressable
-                accessibilityRole="link"
-                style={styles.quickNavigationButton}
-              >
-                <FontAwesome6
-                  name="chart-simple"
-                  size={14}
-                  color={theme.primary}
-                />
-                <Text style={styles.quickNavigationText}>Statistics</Text>
-              </HoverablePressable>
-            </Link>
           </View>
           <HelpTip title="Getting started">
             Add a dish name, description, course, and price, then tap Add dish.
@@ -432,28 +402,6 @@ const createStyles = (theme) =>
       justifyContent: "center",
       alignItems: "center",
       marginTop: 5,
-    },
-    quickNavigation: {
-      flexDirection: "row",
-      gap: 10,
-      marginBottom: 18,
-      marginTop: -12,
-    },
-    quickNavigationButton: {
-      alignItems: "center",
-      backgroundColor: theme.surface,
-      borderColor: theme.chipBorder,
-      borderRadius: 10,
-      borderWidth: 1,
-      flexDirection: "row",
-      gap: 8,
-      minHeight: 44,
-      paddingHorizontal: 14,
-    },
-    quickNavigationText: {
-      color: theme.ink,
-      fontFamily: fontFamilies.medium,
-      fontSize: 13,
     },
     countNumber: {
       color: theme.accent,
