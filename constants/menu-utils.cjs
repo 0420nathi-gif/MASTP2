@@ -1,3 +1,6 @@
+const MENU_STORAGE_VERSION = 2;
+const { seedMenuDishes } = require("./seed-menu.cjs");
+
 function isMenuItem(item) {
   return Boolean(
     item &&
@@ -43,6 +46,45 @@ function addMenuItem(menuItems, item) {
 
 function addMenuItems(menuItems, items) {
   return [...items.map(createMenuItem), ...menuItems];
+}
+
+function increaseMenuPricesByFiftyPercent(menuItems) {
+  return menuItems.map((item) => ({
+    ...item,
+    price: (
+      Math.round(Number(item.price.replace(",", ".")) * 150) / 100
+    ).toFixed(2),
+  }));
+}
+
+function migrateStoredMenu(storedMenu) {
+  if (Array.isArray(storedMenu) && storedMenu.every(isMenuItem)) {
+    return {
+      items: addMenuItems(
+        increaseMenuPricesByFiftyPercent(storedMenu),
+        seedMenuDishes,
+      ),
+      needsSave: true,
+    };
+  }
+
+  if (
+    (storedMenu?.version === 1 ||
+      storedMenu?.version === MENU_STORAGE_VERSION) &&
+    Array.isArray(storedMenu.items) &&
+    storedMenu.items.every(isMenuItem)
+  ) {
+    if (storedMenu.version === MENU_STORAGE_VERSION) {
+      return { items: storedMenu.items, needsSave: false };
+    }
+
+    return {
+      items: addMenuItems(storedMenu.items, seedMenuDishes),
+      needsSave: true,
+    };
+  }
+
+  throw new Error("Saved menu has an invalid format.");
 }
 
 function createMenuItem(item) {
@@ -92,7 +134,10 @@ module.exports = {
   countAvailableMenuItems,
   filterMenuItems,
   getMenuStatistics,
+  increaseMenuPricesByFiftyPercent,
   isMenuItem,
+  MENU_STORAGE_VERSION,
+  migrateStoredMenu,
   removeMenuItem,
   toggleMenuItemAvailability,
   updateMenuItem,

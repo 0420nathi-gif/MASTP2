@@ -6,11 +6,15 @@ const {
   countAvailableMenuItems,
   filterMenuItems,
   getMenuStatistics,
+  increaseMenuPricesByFiftyPercent,
   isMenuItem,
+  MENU_STORAGE_VERSION,
+  migrateStoredMenu,
   removeMenuItem,
   toggleMenuItemAvailability,
   updateMenuItem,
 } = require("../constants/menu-utils.cjs");
+const { seedMenuDishes } = require("../constants/seed-menu.cjs");
 
 const menuItems = [
   {
@@ -135,6 +139,95 @@ test("adds multiple dishes in entry order and marks them available", () => {
     added.slice(0, dishes.length).every((item) => item.available === true),
   );
   assert.deepEqual(added.slice(dishes.length), menuItems);
+});
+
+test("increases existing dish prices by 50% while preserving the other fields", () => {
+  const updated = increaseMenuPricesByFiftyPercent(menuItems);
+
+  assert.deepEqual(
+    updated.map(({ price }) => price),
+    ["27.00", "14.25"],
+  );
+  assert.deepEqual(
+    updated.map(({ id, name, description, course }) => ({
+      id,
+      name,
+      description,
+      course,
+    })),
+    menuItems.map(({ id, name, description, course }) => ({
+      id,
+      name,
+      description,
+      course,
+    })),
+  );
+  assert.deepEqual(menuItems.map(({ price }) => price), ["18.00", "9.50"]);
+});
+
+test("migrates legacy menu prices once and preserves prices on later loads", () => {
+  const firstLoad = migrateStoredMenu(menuItems);
+
+  assert.equal(firstLoad.needsSave, true);
+  assert.equal(firstLoad.items.length, menuItems.length + 20);
+  assert.deepEqual(
+    firstLoad.items.slice(20).map(({ price }) => price),
+    ["27.00", "14.25"],
+  );
+
+  const nextLoad = migrateStoredMenu({
+    version: MENU_STORAGE_VERSION,
+    items: firstLoad.items,
+  });
+
+  assert.equal(nextLoad.needsSave, false);
+  assert.deepEqual(nextLoad.items, firstLoad.items);
+});
+
+test("adds 20 dishes to version 1 menus without changing existing dish prices", () => {
+  const versionOneMenu = {
+    version: 1,
+    items: menuItems.map((item, index) => ({
+      ...item,
+      price: index === 0 ? "27.00" : "14.25",
+    })),
+  };
+  const migration = migrateStoredMenu(versionOneMenu);
+
+  assert.equal(migration.needsSave, true);
+  assert.equal(migration.items.length, menuItems.length + 20);
+  assert.deepEqual(
+    migration.items.slice(20).map(({ price }) => price),
+    ["27.00", "14.25"],
+  );
+  assert.deepEqual(
+    migration.items.slice(0, 20).map(({ name }) => name),
+    seedMenuDishes.map(({ name }) => name),
+  );
+});
+
+test("starts an empty menu with the 20 seeded dishes", () => {
+  const migration = migrateStoredMenu([]);
+
+  assert.equal(migration.needsSave, true);
+  assert.equal(migration.items.length, 20);
+  assert.ok(migration.items.every(isMenuItem));
+});
+
+test("seed dishes have an average price of R175 and stay between R150 and R200", () => {
+  const prices = seedMenuDishes.map(({ price }) => Number(price));
+  const average = prices.reduce((total, price) => total + price, 0) / prices.length;
+
+  assert.equal(seedMenuDishes.length, 20);
+  assert.equal(average, 175);
+  assert.ok(prices.every((price) => price >= 150 && price <= 200));
+});
+
+test("rejects malformed or unsupported saved menu data", () => {
+  assert.throws(() => migrateStoredMenu([{ ...menuItems[0], price: 18 }]));
+  assert.throws(() =>
+    migrateStoredMenu({ version: MENU_STORAGE_VERSION + 1, items: menuItems }),
+  );
 });
 
 test("tracks availability while treating existing dishes as available", () => {

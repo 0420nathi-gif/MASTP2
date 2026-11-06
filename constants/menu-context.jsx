@@ -9,7 +9,8 @@ import React, {
 import {
   addMenuItem as addMenuItemToList,
   addMenuItems as addMenuItemsToList,
-  isMenuItem,
+  MENU_STORAGE_VERSION,
+  migrateStoredMenu,
   removeMenuItem as removeMenuItemFromList,
   toggleMenuItemAvailability,
   updateMenuItem as updateMenuItemInList,
@@ -42,12 +43,18 @@ export function MenuProvider({ children }) {
       try {
         const storedMenu = await AsyncStorage.getItem(MENU_STORAGE_KEY);
         const parsedMenu = storedMenu ? JSON.parse(storedMenu) : [];
-
-        if (!Array.isArray(parsedMenu) || !parsedMenu.every(isMenuItem)) {
-          throw new Error("Saved menu has an invalid format.");
+        const migration = migrateStoredMenu(parsedMenu);
+        if (migration.needsSave) {
+          await AsyncStorage.setItem(
+            MENU_STORAGE_KEY,
+            JSON.stringify({
+              version: MENU_STORAGE_VERSION,
+              items: migration.items,
+            }),
+          );
         }
 
-        if (isMounted) setMenuItems(parsedMenu);
+        if (isMounted) setMenuItems(migration.items);
       } catch (error) {
         console.error("Failed to load the saved menu.", error);
         if (isMounted) {
@@ -75,7 +82,10 @@ export function MenuProvider({ children }) {
 
     const saveMenu = async () => {
       const sequence = ++saveSequence.current;
-      const serializedMenu = JSON.stringify(menuItems);
+      const serializedMenu = JSON.stringify({
+        version: MENU_STORAGE_VERSION,
+        items: menuItems,
+      });
       setSaveStatus("saving");
       saveQueue.current = saveQueue.current.then(
         () => AsyncStorage.setItem(MENU_STORAGE_KEY, serializedMenu),
