@@ -25,14 +25,19 @@ import {
   useAppTheme,
 } from "../constants/theme-context";
 
-const emptyForm = { name: "", description: "", course: "Main", price: "" };
+const createEmptyForm = () => ({
+  name: "",
+  description: "",
+  course: "Main",
+  price: "",
+});
 
 export default function Home() {
-  const [form, setForm] = useState(emptyForm);
-  const [errors, setErrors] = useState({});
+  const [forms, setForms] = useState(() => [createEmptyForm()]);
+  const [errors, setErrors] = useState([{}]);
   const [confirmation, setConfirmation] = useState("");
   const {
-    addItem,
+    addItems,
     updateItem,
     menuItems,
     isLoading,
@@ -62,69 +67,110 @@ export default function Home() {
       }
 
       initializedEditId.current = editId;
-      setForm({
-        name: item.name,
-        description: item.description,
-        course: item.course,
-        price: item.price,
-      });
-      setErrors({});
+      setForms([
+        {
+          name: item.name,
+          description: item.description,
+          course: item.course,
+          price: item.price,
+        },
+      ]);
+      setErrors([{}]);
       setConfirmation("");
       return;
     }
 
     if (initializedEditId.current !== null) {
-      setForm(emptyForm);
-      setErrors({});
+      setForms([createEmptyForm()]);
+      setErrors([{}]);
       setConfirmation("");
     }
     initializedEditId.current = null;
   }, [editId, isLoading, menuItems, router]);
 
-  const updateField = (field, value) => {
-    setForm((current) => ({ ...current, [field]: value }));
-    if (errors[field]) setErrors((current) => ({ ...current, [field]: "" }));
+  const updateField = (index, field, value) => {
+    setForms((current) =>
+      current.map((form, formIndex) =>
+        formIndex === index ? { ...form, [field]: value } : form,
+      ),
+    );
+    setErrors((current) =>
+      current.map((entry, entryIndex) =>
+        entryIndex === index ? { ...entry, [field]: "" } : entry,
+      ),
+    );
     setConfirmation("");
   };
 
-  const validate = () => {
-    const nextErrors = {};
-    const price = Number(form.price.replace(",", "."));
-    if (!form.name.trim()) nextErrors.name = "Enter a dish name.";
-    if (!form.description.trim())
-      nextErrors.description = "Add a short description.";
-    if (!form.course) nextErrors.course = "Choose a course.";
-    if (!form.price.trim()) nextErrors.price = "Enter a price.";
-    else if (!Number.isFinite(price) || price <= 0)
-      nextErrors.price = "Use a price greater than 0.";
+  const validateForms = () => {
+    const nextErrors = forms.map((form) => {
+      const formErrors = {};
+      const price = Number(form.price.replace(",", "."));
+      if (!form.name.trim()) formErrors.name = "Enter a dish name.";
+      if (!form.description.trim())
+        formErrors.description = "Add a short description.";
+      if (!form.course) formErrors.course = "Choose a course.";
+      if (!form.price.trim()) formErrors.price = "Enter a price.";
+      else if (!Number.isFinite(price) || price <= 0)
+        formErrors.price = "Use a price greater than 0.";
+      return formErrors;
+    });
     setErrors(nextErrors);
-    const firstInvalidField = ["name", "description", "price"].find(
-      (field) => nextErrors[field],
+    const firstInvalidIndex = nextErrors.findIndex(
+      (formErrors) => Object.keys(formErrors).length > 0,
     );
-    if (firstInvalidField) inputRefs.current[firstInvalidField]?.focus();
-    return Object.keys(nextErrors).length === 0;
+    if (firstInvalidIndex !== -1) {
+      const firstInvalidField = ["name", "description", "price"].find(
+        (field) => nextErrors[firstInvalidIndex][field],
+      );
+      if (firstInvalidField) {
+        inputRefs.current[`${firstInvalidIndex}.${firstInvalidField}`]?.focus();
+      }
+      return false;
+    }
+    return true;
   };
 
-  const saveMenuItem = () => {
+  const addAnotherDish = () => {
+    setForms((current) => [...current, createEmptyForm()]);
+    setErrors((current) => [...current, {}]);
+    setConfirmation("");
+  };
+
+  const removeDishForm = (index) => {
+    setForms((current) =>
+      current.filter((_, formIndex) => formIndex !== index),
+    );
+    setErrors((current) =>
+      current.filter((_, formIndex) => formIndex !== index),
+    );
+    setConfirmation("");
+  };
+
+  const saveMenuItems = () => {
     if (isLoading || storageError) return;
-    if (!validate()) return;
-    const savedItem = {
+    if (!validateForms()) return;
+    const savedItems = forms.map((form) => ({
       name: form.name.trim(),
       description: form.description.trim(),
       course: form.course,
       price: Number(form.price.replace(",", ".")).toFixed(2),
-    };
+    }));
 
     if (editingItem) {
-      updateItem(editingItem.id, savedItem);
+      updateItem(editingItem.id, savedItems[0]);
       router.replace("/Menu");
       return;
     }
 
-    addItem(savedItem);
-    setForm(emptyForm);
-    setErrors({});
-    setConfirmation(`${savedItem.name} was added to your menu.`);
+    addItems(savedItems);
+    setForms([createEmptyForm()]);
+    setErrors([{}]);
+    setConfirmation(
+      savedItems.length === 1
+        ? `${savedItems[0].name} was added to your menu.`
+        : `${savedItems.length} dishes were added to your menu.`,
+    );
   };
 
   return (
@@ -159,99 +205,156 @@ export default function Home() {
             </View>
           </View>
           <HelpTip title="Getting started">
-            Add a dish name, description, course, and price, then tap Add dish.
-            Your menu is saved automatically.
+            Add a dish name, description, course, and price. Use Add another
+            dish to enter starters, mains, drinks, or desserts together, then
+            save them all at once.
           </HelpTip>
 
           <View style={styles.formCard}>
-            <Text style={styles.sectionEyebrow}>
-              {editingItem ? "EDIT DISH" : "NEW DISH"}
-            </Text>
-            <Text style={styles.sectionTitle}>
-              {editingItem ? "Update this dish" : "Add to the menu"}
-            </Text>
-            <Field
-              label="Dish name"
-              value={form.name}
-              onChangeText={(value) => updateField("name", value)}
-              placeholder="e.g. Charred lemon chicken"
-              error={errors.name}
-              inputRef={(ref) => {
-                inputRefs.current.name = ref;
-              }}
-              returnKeyType="next"
-              onSubmitEditing={() => inputRefs.current.description?.focus()}
-            />
-            <Field
-              label="Description"
-              value={form.description}
-              onChangeText={(value) => updateField("description", value)}
-              placeholder="What makes this dish special?"
-              error={errors.description}
-              multiline
-              inputRef={(ref) => {
-                inputRefs.current.description = ref;
-              }}
-            />
-
-            <Text style={styles.label}>Course</Text>
-            <View style={styles.courseRow}>
-              {foodCategories.map((category) => (
-                <HoverablePressable
-                  key={category.name}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${category.name} course`}
-                  accessibilityState={{
-                    selected: form.course === category.name,
+            {forms.map((form, index) => (
+              <View
+                key={`dish-form-${index}`}
+                style={index > 0 ? styles.additionalDishForm : undefined}
+              >
+                <View style={styles.dishFormHeading}>
+                  <View>
+                    <Text style={styles.sectionEyebrow}>
+                      {editingItem
+                        ? "EDIT DISH"
+                        : forms.length > 1
+                          ? `DISH ${index + 1}`
+                          : "NEW DISH"}
+                    </Text>
+                    <Text style={styles.sectionTitle}>
+                      {editingItem
+                        ? "Update this dish"
+                        : forms.length > 1
+                          ? `Dish ${index + 1} details`
+                          : "Add to the menu"}
+                    </Text>
+                  </View>
+                  {forms.length > 1 && !editingItem ? (
+                    <HoverablePressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove dish ${index + 1}`}
+                      onPress={() => removeDishForm(index)}
+                      style={styles.removeDishButton}
+                    >
+                      <Text style={styles.removeDishText}>Remove</Text>
+                    </HoverablePressable>
+                  ) : null}
+                </View>
+                <Field
+                  label="Dish name"
+                  value={form.name}
+                  onChangeText={(value) => updateField(index, "name", value)}
+                  placeholder="e.g. Charred lemon chicken"
+                  error={errors[index]?.name}
+                  inputRef={(ref) => {
+                    inputRefs.current[`${index}.name`] = ref;
                   }}
-                  onPress={() => updateField("course", category.name)}
-                  style={[
-                    styles.courseChip,
-                    form.course === category.name && styles.courseChipSelected,
-                  ]}
-                >
-                  <FontAwesome6
-                    name={category.icon}
-                    size={13}
-                    color={
-                      form.course === category.name
-                        ? theme.surface
-                        : theme.primary
-                    }
-                  />
-                  <Text
-                    style={[
-                      styles.courseText,
-                      form.course === category.name && styles.courseTextSelected,
-                    ]}
-                  >
-                    {category.name}
+                  returnKeyType="next"
+                  onSubmitEditing={() =>
+                    inputRefs.current[`${index}.description`]?.focus()
+                  }
+                />
+                <Field
+                  label="Description"
+                  value={form.description}
+                  onChangeText={(value) =>
+                    updateField(index, "description", value)
+                  }
+                  placeholder="What makes this dish special?"
+                  error={errors[index]?.description}
+                  multiline
+                  inputRef={(ref) => {
+                    inputRefs.current[`${index}.description`] = ref;
+                  }}
+                />
+
+                <Text style={styles.label}>Course</Text>
+                <View style={styles.courseRow}>
+                  {foodCategories.map((category) => (
+                    <HoverablePressable
+                      key={category.name}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${category.name} course for dish ${
+                        index + 1
+                      }`}
+                      accessibilityState={{
+                        selected: form.course === category.name,
+                      }}
+                      onPress={() =>
+                        updateField(index, "course", category.name)
+                      }
+                      style={[
+                        styles.courseChip,
+                        form.course === category.name &&
+                          styles.courseChipSelected,
+                      ]}
+                    >
+                      <FontAwesome6
+                        name={category.icon}
+                        size={13}
+                        color={
+                          form.course === category.name
+                            ? theme.surface
+                            : theme.primary
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.courseText,
+                          form.course === category.name &&
+                            styles.courseTextSelected,
+                        ]}
+                      >
+                        {category.name}
+                      </Text>
+                    </HoverablePressable>
+                  ))}
+                </View>
+                {errors[index]?.course ? (
+                  <Text accessibilityLiveRegion="polite" style={styles.error}>
+                    {errors[index].course}
                   </Text>
-                </HoverablePressable>
-              ))}
-            </View>
-            {errors.course ? (
-              <Text accessibilityLiveRegion="polite" style={styles.error}>
-                {errors.course}
-              </Text>
+                ) : null}
+                <Field
+                  label="Price"
+                  value={form.price}
+                  onChangeText={(value) => updateField(index, "price", value)}
+                  placeholder="0.00"
+                  error={errors[index]?.price}
+                  keyboardType="decimal-pad"
+                  prefix="R"
+                  inputRef={(ref) => {
+                    inputRefs.current[`${index}.price`] = ref;
+                  }}
+                  returnKeyType={
+                    index < forms.length - 1 ? "next" : "done"
+                  }
+                  onSubmitEditing={
+                    index < forms.length - 1
+                      ? () => inputRefs.current[`${index + 1}.name`]?.focus()
+                      : saveMenuItems
+                  }
+                />
+              </View>
+            ))}
+
+            {!editingItem ? (
+              <HoverablePressable
+                accessibilityRole="button"
+                onPress={addAnotherDish}
+                disabled={isLoading || Boolean(storageError)}
+                style={styles.addAnotherButton}
+              >
+                <Text style={styles.addAnotherText}>+ Add another dish</Text>
+              </HoverablePressable>
             ) : null}
-            <Field
-              label="Price"
-              value={form.price}
-              onChangeText={(value) => updateField("price", value)}
-              placeholder="0.00"
-              error={errors.price}
-              keyboardType="decimal-pad"
-              prefix="R"
-              inputRef={(ref) => {
-                inputRefs.current.price = ref;
-              }}
-              returnKeyType="done"
-              onSubmitEditing={saveMenuItem}
-            />
 
             <HoverablePressable
-              onPress={saveMenuItem}
+              onPress={saveMenuItems}
               disabled={isLoading || Boolean(storageError)}
               style={({ pressed }) => [
                 styles.addButton,
@@ -263,7 +366,9 @@ export default function Home() {
                   ? "Loading saved menu..."
                   : editingItem
                     ? "Save changes"
-                    : "+ Add dish to menu"}
+                    : forms.length === 1
+                      ? "+ Add dish to menu"
+                      : `Add ${forms.length} dishes to menu`}
               </Text>
             </HoverablePressable>
             {confirmation ? (
@@ -437,6 +542,28 @@ const createStyles = (theme) =>
       fontSize: 22,
       marginBottom: 18,
     },
+    dishFormHeading: {
+      alignItems: "flex-start",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    additionalDishForm: {
+      borderTopColor: theme.inputBorder,
+      borderTopWidth: 1,
+      marginTop: 22,
+      paddingTop: 22,
+    },
+    removeDishButton: {
+      alignItems: "center",
+      justifyContent: "center",
+      minHeight: 40,
+      paddingHorizontal: 10,
+    },
+    removeDishText: {
+      color: theme.error,
+      fontFamily: fontFamilies.medium,
+      fontSize: 13,
+    },
     fieldGroup: { marginBottom: 16 },
     label: {
       color: theme.label,
@@ -520,6 +647,19 @@ const createStyles = (theme) =>
       color: theme.surface,
       fontFamily: fontFamilies.bold,
       fontSize: 15,
+    },
+    addAnotherButton: {
+      alignItems: "center",
+      borderColor: theme.chipBorder,
+      borderRadius: 11,
+      borderWidth: 1,
+      marginTop: 4,
+      paddingVertical: 13,
+    },
+    addAnotherText: {
+      color: theme.primary,
+      fontFamily: fontFamilies.bold,
+      fontSize: 14,
     },
     confirmation: {
       alignItems: "center",

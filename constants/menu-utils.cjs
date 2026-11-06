@@ -38,8 +38,16 @@ function filterMenuItems(
 }
 
 function addMenuItem(menuItems, item) {
+  return [createMenuItem(item), ...menuItems];
+}
+
+function addMenuItems(menuItems, items) {
+  return [...items.map(createMenuItem), ...menuItems];
+}
+
+function createMenuItem(item) {
   const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-  return [{ ...item, id, available: true }, ...menuItems];
+  return { ...item, id, available: true };
 }
 
 function updateMenuItem(menuItems, id, updatedItem) {
@@ -80,6 +88,7 @@ function getMenuStatistics(menuItems) {
 
 module.exports = {
   addMenuItem,
+  addMenuItems,
   countAvailableMenuItems,
   filterMenuItems,
   getMenuStatistics,

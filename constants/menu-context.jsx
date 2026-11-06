@@ -8,6 +8,7 @@ import React, {
 } from "react";
 import {
   addMenuItem as addMenuItemToList,
+  addMenuItems as addMenuItemsToList,
   isMenuItem,
   removeMenuItem as removeMenuItemFromList,
   toggleMenuItemAvailability,
@@ -103,6 +104,10 @@ export function MenuProvider({ children }) {
     setMenuItems((current) => addMenuItemToList(current, item));
   };
 
+  const addItems = (items) => {
+    setMenuItems((current) => addMenuItemsToList(current, items));
+  };
+
   const updateItem = (id, updatedItem) => {
     setMenuItems((current) => updateMenuItemInList(current, id, updatedItem));
   };
@@ -120,6 +125,7 @@ export function MenuProvider({ children }) {
       value={{
         menuItems,
         addItem,
+        addItems,
         updateItem,
         removeItem,
         toggleItemAvailability,

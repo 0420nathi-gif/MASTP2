@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const test = require("node:test");
 const {
   addMenuItem,
+  addMenuItems,
   countAvailableMenuItems,
   filterMenuItems,
   getMenuStatistics,
@@ -93,6 +94,47 @@ test("adds, updates, and removes dishes without changing other records", () => {
     removed.map((item) => item.id),
     [added[0].id, "1"],
   );
+});
+
+test("adds multiple dishes in entry order and marks them available", () => {
+  const dishes = [
+    {
+      name: "Tomato Soup",
+      description: "Slow roasted tomatoes",
+      course: "Starter",
+      price: "7.00",
+    },
+    {
+      name: "Roast Chicken",
+      description: "Herb-roasted chicken with seasonal vegetables",
+      course: "Main",
+      price: "22.00",
+    },
+    {
+      name: "Berry Spritz",
+      description: "Sparkling berries and lime",
+      course: "Drinks",
+      price: "5.50",
+    },
+    {
+      name: "Chocolate Tart",
+      description: "Dark chocolate",
+      course: "Dessert",
+      price: "9.50",
+    },
+  ];
+
+  const added = addMenuItems(menuItems, dishes);
+
+  assert.deepEqual(
+    added.slice(0, dishes.length).map(({ name }) => name),
+    dishes.map(({ name }) => name),
+  );
+  assert.ok(added.slice(0, dishes.length).every((item) => item.id));
+  assert.ok(
+    added.slice(0, dishes.length).every((item) => item.available === true),
+  );
+  assert.deepEqual(added.slice(dishes.length), menuItems);
 });
 
 test("tracks availability while treating existing dishes as available", () => {
