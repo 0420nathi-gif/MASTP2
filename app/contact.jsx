@@ -29,7 +29,7 @@ export default function Contact() {
     try {
       await Linking.openURL(
         `mailto:0420nathi@gmail.com?subject=${encodeURIComponent(
-          "FRNA kitchen support",
+          "{Food Manager} kitchen support",
         )}${bodyQuery}`,
       );
       if (body) {
